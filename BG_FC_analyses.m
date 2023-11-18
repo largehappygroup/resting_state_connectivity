@@ -4,39 +4,41 @@
 
 %% Note: this script uses the shapes study data as an example. Change relevant directories/filenames to other datasets as needed.
 
-
 %% Initialization
 
 % First, put all of the preprocessed fMRI files for a single study in one folder, e.g., /storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed/
 % The contents of that folder should be along the lines of "sub1_preproc.nii," "sub2_preproc.nii," etc. -- subject files to analyze and nothing else!
 
 % Go to the data:
-cd('/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed'); % CHANGE THIS to the data directory with the preprocessed fMRI data
-files = dir(); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
+% cd('/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed'); % CHANGE THIS to the data directory with the preprocessed fMRI data
+% cd('mnt/codeprose/preprocessed/')
+datapath = 'mnt/codeprose/preprocessed';
+files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 % Next, make sure that you have a brain mask file and any results or atlas files you want to use to identify seed regions
-
 % Load a brain mask to limit analyses:
-maskfile = '/storage2/fmridata/MNI152_T1_2mm_brain_Mask.nii'; % change the path as needed
+maskfile = 'mnt/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz'; % change the path as needed
 mask = niftiread(maskfile); % loads the full 91x109x91 mask
 brain_idx = find(mask>0); % identifies only the voxels of the brain
 
 % Load and create an empty template image for writing NIfTI files:
-nii_template = load_untouch_nii('/storage2/fmridata/MNI152_T1_2mm_brain_Mask.nii'); % load the brain mask for an example in the right (91x109x91) space
+nii_template = load_untouch_nii(maskfile); % load the brain mask for an example in the right (91x109x91) space
 nii_template.img = zeros(size(nii_template.img)); % replace the mask with all 0s
 empty_brain = nii_template.img; % create an empty_brain image in the template's shape
 
 % Load any results files or atlases, in 91x109x91 space, if desired (i.e., if not doing a voxel-by-voxel analysis):
 % Here are two example atlases I suggest (ADD THESE to the fmridata directory first!):
-cortex_atlas = niftiread('/storage2/fmridata/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % from https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI
-cortex_labels = readtable('/storage2/fmridata/Schaefer2018_400Parcels_7Networks_order.lut','ReadVariableNames',0,'FileType','text');
+cortex_atlas = niftiread('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % from https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI
+cortex_labels = readtable('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order.lut','ReadVariableNames',0,'FileType','text');
 for i=1:size(cortex_labels,1) % if doing network (as opposed to just region-based) analyses, derive a list of network identities from the labels of the networks and regions:
-    network_labels{i}=cortex_labels.Var5{i}(14:17); % this only works with the specifics of the Schaefer atlas labels: adapt as needed
+    temp = split(cortex_labels.Var5{i}, '_');
+    temp = temp{3};
+    network_labels{i}=temp; % this only works with the specifics of the Schaefer atlas labels: adapt as needed
 end
 all_cortex_network_labels=unique(network_labels);
 
-subcortex_atlas = niftiread('/storage2/fmridata/Tian_Subcortex_S1_3T.nii'); % from https://github.com/yetianmed/subcortex/tree/master/Group-Parcellation/3T/Subcortex-Only
-subcortex_labels = readtable('/storage2/fmridata/Tian_Subcortex_S1_3T_label.txt','ReadVariableNames',0); % for this particular atlas, only the region names are given (because they're all within the subcortex)
+subcortex_atlas = niftiread('mnt/analysis/atlases/Tian_Subcortex_S1_3T.nii'); % from https://github.com/yetianmed/subcortex/tree/master/Group-Parcellation/3T/Subcortex-Only
+subcortex_labels = readtable('mnt/analysis/atlases/Tian_Subcortex_S1_3T_label.txt','ReadVariableNames',0); % for this particular atlas, only the region names are given (because they're all within the subcortex)
 
 roi_labels = [cortex_labels.Var5; subcortex_labels]; % here I combine the two atlases, with the cortex first and subcortex second, to use both of them together
 
@@ -63,6 +65,7 @@ for i=1:numel(all_cortex_network_labels)
     end
     clear net_rois;
 end
+
 net_masks_2d{numel(all_cortex_network_labels)+1} = []; % add another network (the subcortex) from the other (Tian et al.) atlas:
 net_rois = numel(unique(cortex_2d_brain)):(numel(unique(atlas_2d_brain))-1);
 for j=1:numel(net_rois)
@@ -71,8 +74,9 @@ end
 all_cortex_network_labels{end+1}='Subcortex';
 
 % Here's an example of a result/seed that you might use:
-result_map = niftiread('/storage2/fmridata/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
+result_map = niftiread('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
 result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
+
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
 seed_vals = [1,2,3];
 for i=1:numel(seed_vals)
@@ -84,7 +88,6 @@ end
 for f=1:numel(fnames)
     
     % Load and shape the data:
-    
     disp(['subject ',num2str(f),' of ',num2str(numel(fnames))]);
     rest_data = niftiread(fnames{f}); % load the data
     rest_data_2d = reshape(rest_data, numel(mask), size(rest_data,4)); % reshape it to 2D (voxels x timepoints)
