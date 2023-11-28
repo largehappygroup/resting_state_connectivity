@@ -78,7 +78,8 @@ result_map = niftiread('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_o
 result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
 
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
-seed_vals = [1,2,3];
+% seed_vals = [1,2,3];
+seed_vals = [8, 17, 71, 136, 209, 216, 309, 376];
 for i=1:numel(seed_vals)
     seed_masks_2d{i} = find(result_map_2d_brain == seed_vals(i));
 end
