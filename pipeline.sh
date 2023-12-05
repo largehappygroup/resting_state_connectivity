@@ -55,15 +55,15 @@ preprocess(){
 # for loop going through all participant folders 
 count=0
 
-find ./codeprose -maxdepth 1 -type d | while read -r folder; do
-      foldername="${folder:12}"
-      echo $foldername
+find ../codeprose/ -maxdepth 1 -type d | while read -r folder; do
+      foldername="${folder:13}"
       if [[ "$foldername" =~  ^[0-9]+$ ]]; then
-            mkdir "codeprose/out_$foldername" 
+            echo $foldername
+            mkdir "../codeprose/out_$foldername" 
             echo "Processing folder $foldername"
-            ANATFILE="codeprose/$foldername/ht1spgr_208sl.nii"
-            FUNCFILE="codeprose/$foldername/utrun_01.nii"
-            OUT="codeprose/out_$foldername"
+            ANATFILE="../codeprose/$foldername/ht1spgr_208sl.nii"
+            FUNCFILE="../codeprose/$foldername/utrun_01.nii"
+            OUT="../codeprose/out_$foldername"
             preprocess $ANATFILE $FUNCFILE $OUT
       fi
 done

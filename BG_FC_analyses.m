@@ -12,7 +12,7 @@
 % Go to the data:
 % cd('/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed'); % CHANGE THIS to the data directory with the preprocessed fMRI data
 % cd('mnt/codeprose/preprocessed/')
-datapath = 'mnt/codeprose/preprocessed';
+datapath = 'mnt/motion_corrected/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 % Next, make sure that you have a brain mask file and any results or atlas files you want to use to identify seed regions
@@ -79,21 +79,20 @@ result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
 
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
 % seed_vals = [1,2,3];
-seed_vals = [8, 17, 71, 136, 209, 216, 309, 376];
+%seed_vals = [8, 17, 71, 136, 209, 216, 309, 376];
+seed_vals = [8, 70, 74, 192, 271, 378, 396, 397];
 for i=1:numel(seed_vals)
     seed_masks_2d{i} = find(result_map_2d_brain == seed_vals(i));
 end
 
 %% Analyze each subject:
-
 for f=1:numel(fnames)
-    
+    tic
     % Load and shape the data:
-    disp(['subject ',num2str(f),' of ',num2str(numel(fnames))]);
+    disp(['subject ',num2str(f),' of ',num2str(numel(fnames)),':', fnames{f}]);
     rest_data = niftiread(fnames{f}); % load the data
     rest_data_2d = reshape(rest_data, numel(mask), size(rest_data,4)); % reshape it to 2D (voxels x timepoints)
     rest_data_2d_brain = rest_data_2d(brain_idx,:); % narrow it down to only the voxels in the brain mask (which importantly matches the size of the atlases!)
-    
     % Analyze and save results:
     
     % If using seed regions:
@@ -104,58 +103,65 @@ for f=1:numel(fnames)
     for i=1:numel(seed_masks_2d) % creates a seed ROIs x voxels matrix for the FC from each seed to each voxel
         [FC_seed2vox(i,:), FCp_seed2vox(i,:)] = corr(seed_ts(i,:)', rest_data_2d_brain','rows','pairwise','type','pearson');
     end
-    allsubs_FC_seed2vox(:,:,f) = FC_seed2vox; % save the results
+    subj_seedvox(:,:,f) = FC_seed2vox; % save the results
+    toc
+    % [FC_seed2seed, FCp_seed2seed] = corr(seed_ts','rows','pairwise','type','pearson'); % creates a seed ROIs x seed ROIs matrix for the FC from each seed to each other seed (e.g., for measuring the FC between the regions activated during the task)
+    % allsubs_FC_seed2seed(:,:,f) = FC_seed2seed; % save the results
     
-    [FC_seed2seed, FCp_seed2seed] = corr(seed_ts','rows','pairwise','type','pearson'); % creates a seed ROIs x seed ROIs matrix for the FC from each seed to each other seed (e.g., for measuring the FC between the regions activated during the task)
-    allsubs_FC_seed2seed(:,:,f) = FC_seed2seed; % save the results
-    
-    % If using ROIs (which are essentially seeds):
-    for i=1:numel(roi_masks_2d) % creates an ROIs x timepoints matrix of the average time series in each ROI
-        roi_ts(i,:) = nanmean(rest_data_2d_brain(roi_masks_2d{i},:));
-    end
-    
-    [FC_roi2roi, FCp_roi2roi] = corr(roi_ts','rows','pairwise','type','pearson'); % creates an ROIs x ROIs matrix for the FC from each ROI to each other ROI
-    allsubs_FC_roi2roi(:,:,f) = FC_roi2roi; % save the results
-    
-    % If using networks:
-    for i=1:numel(net_masks_2d) % creates a networks x timepoints matrix of the average time series in each network
-        net_ts(i,:) = nanmean(rest_data_2d_brain(net_masks_2d{i},:));
-    end
-
-    [FC_net2net, FCp_net2net] = corr(net_ts','rows','pairwise','type','pearson'); % creates a network x network matrix for the FC from each network to each other network
-    allsubs_FC_net2net(:,:,f) = FC_net2net; % save the results
+    % % If using ROIs (which are essentially seeds):
+    % for i=1:numel(roi_masks_2d) % creates an ROIs x timepoints matrix of the average time series in each ROI
+    %     roi_ts(i,:) = nanmean(rest_data_2d_brain(roi_masks_2d{i},:));
+    % end
+    % 
+    % [FC_roi2roi, FCp_roi2roi] = corr(roi_ts','rows','pairwise','type','pearson'); % creates an ROIs x ROIs matrix for the FC from each ROI to each other ROI
+    % allsubs_FC_roi2roi(:,:,f) = FC_roi2roi; % save the results
+    % 
+    % % If using networks:
+    % for i=1:numel(net_masks_2d) % creates a networks x timepoints matrix of the average time series in each network
+    %     net_ts(i,:) = nanmean(rest_data_2d_brain(net_masks_2d{i},:));
+    % end
+    % 
+    % [FC_net2net, FCp_net2net] = corr(net_ts','rows','pairwise','type','pearson'); % creates a network x network matrix for the FC from each network to each other network
+    % allsubs_FC_net2net(:,:,f) = FC_net2net; % save the results
     
 end
+clear rest_data
+save('mnt/analysis/12032023.mat')
     
 %% Analyze group effects:
 % You could analyze the FC data in many ways. Here are a few ideas.
-
 % If using seed regions:
-zFC_seed2vox = atanh(allsubs_FC_seed2vox); % use Fisher's z transformation to make the correlation coefficients follow a more normal distribution (if wanted)
+subj_seedvox_z = atanh(allsubs_FC_seed2vox); % use Fisher's z transformation to make the correlation coefficients follow a more normal distribution (if wanted)
 
-% Create a 4D NIfTI file for group-level analysis (e.g., with FSL randomise, see https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise/UserGuide#One-Sample_T-test)
-for i=1:numel(seed_masks_2d)
-    grp_seed2vox_2d = repmat(empty_brain(:),1,size(allsubs_FC_seed2vox,3)); % creates a voxel x subject matrix for the seed ROI at hand
-    grp_seed2vox_2d(brain_idx,:) = squeeze(zFC_seed2vox(i,:,:)); % imports the FC data
-    grp_seed2vox_4d = reshape(grp_seed2vox_2d,[size(mask),size(allsubs_FC_seed2vox,3)]); % reshapes the data to 4D (3 spatial dimensions + subjects)
-    write_nii_cc(nii_template, grp_seed2vox_4d , ['/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_results/grp_seed2vox_seed',num2str(i),'_z_4d.nii']); 
-end
+novices = {'105' '108' '111' '119' '125' '138' '140' '144' '150'};
+experts = {'121' '122' '129' '131' '141' '142' '151' '201' '203'};
+all_ids = regexprep(fnames, '_mc.nii.gz','');
+nov_idx = find_group_members(novices, all_ids);
+exp_idx = find_group_members(experts, all_ids);
 
 % Evaluate the group-level effect of the FC from each seed to each voxel (e.g., to visualize results):
 for i=1:numel(seed_masks_2d)
-    [~,~,~,stats(i,:)] = ttest(squeeze(zFC_seed2vox(i,:,:))',0); % calculate t statistics
+    [~,pvals(i,:),~,stats(i,:)] = ttest(squeeze(subj_seedvox_z(i,:,:))',0); % calculate t statistics
     
     % Save the resulting t statistics to a brain image in a NIfTI file for hypothesis testing and visualization:
-    grp_seed2vox_t = empty_brain;
-    grp_seed2vox_t(brain_idx) = stats(i).tstat;
-    write_nii_cc(nii_template, grp_seed2vox_ts, ['/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_results/grp_seed2vox_seed',num2str(i),'_t.nii']); 
+    % significant_voxels = benjamini_hochberg(pvals(i,:));
+    significant_voxels = bonferroni(pvals(i,:));
+    
+    grp_seedvox_t = empty_brain(brain_idx);
+    grp_seedvox_t = stats(i).tstat;
+    grp_seedvox_t(~significant_voxels) = 0;
+
+    break
+    write_nii_cc(nii_template, grp_seedvox_t, ['local_results/grp_seedvox',num2str(seed_vals(i)),'_t.nii']);
+    compress_file = sprintf("gzip local_results/grp_seedvox%d_t.nii", seed_vals(i));
+    system(compress_file);
 end
 
 % Compare individual differences in FC to individual differences in other subject-level measures like task performance, coding experience, etc.:
 behavdata = readtable('/storage2/fmridata/fmri-data-shapes/surveydata.csv'); % CHANGE THIS as needed
 
 for i=1:numel(seed_masks_2d) % CHANGE THE BEHAVIORAL VARIABLE as needed
-    [r_FC_behav_seed2roi(i,:),p_FC_behav_seed2roi(i,:)] = corr(behavdata.experience, squeeze(zFC_seed2vox(i,:,:))','rows','pairwise','type','pearson');
+    [r_FC_behav_seed2roi(i,:),p_FC_behav_seed2roi(i,:)] = corr(behavdata.experience, squeeze(subj_seedvox_z(i,:,:))','rows','pairwise','type','pearson');
         
     % Save the resulting correlation statistics to a brain image in a NIfTI file for hypothesis testing and visualization:
     grp_FC_behav_r = empty_brain;
