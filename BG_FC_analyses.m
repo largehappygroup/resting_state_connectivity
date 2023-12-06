@@ -126,18 +126,12 @@ for f=1:numel(fnames)
     
 end
 clear rest_data
-save('mnt/analysis/12032023.mat')
+save('12032023.mat')
     
 %% Analyze group effects:
 % You could analyze the FC data in many ways. Here are a few ideas.
 % If using seed regions:
 subj_seedvox_z = atanh(allsubs_FC_seed2vox); % use Fisher's z transformation to make the correlation coefficients follow a more normal distribution (if wanted)
-
-novices = {'105' '108' '111' '119' '125' '138' '140' '144' '150'};
-experts = {'121' '122' '129' '131' '141' '142' '151' '201' '203'};
-all_ids = regexprep(fnames, '_mc.nii.gz','');
-nov_idx = find_group_members(novices, all_ids);
-exp_idx = find_group_members(experts, all_ids);
 
 % Evaluate the group-level effect of the FC from each seed to each voxel (e.g., to visualize results):
 for i=1:numel(seed_masks_2d)
@@ -145,17 +139,46 @@ for i=1:numel(seed_masks_2d)
     
     % Save the resulting t statistics to a brain image in a NIfTI file for hypothesis testing and visualization:
     % significant_voxels = benjamini_hochberg(pvals(i,:));
-    significant_voxels = bonferroni(pvals(i,:));
+    % significant_voxels = bonferroni(pvals(i,:));
     
-    grp_seedvox_t = empty_brain(brain_idx);
-    grp_seedvox_t = stats(i).tstat;
-    grp_seedvox_t(~significant_voxels) = 0;
+    % grp_seedvox_t(brain_idx) = stats(i).tstat;
+    % grp_seedvox_t(~significant_voxels) = 0;
+    grp_seedvox_t = empty_brain;
+    grp_seedvox_t(brain_idx) = stats(i).tstat;
 
-    break
+    % break
     write_nii_cc(nii_template, grp_seedvox_t, ['local_results/grp_seedvox',num2str(seed_vals(i)),'_t.nii']);
     compress_file = sprintf("gzip local_results/grp_seedvox%d_t.nii", seed_vals(i));
     system(compress_file);
 end
+
+novices = {'105' '108' '111' '119' '125' '138' '140' '144' '150'};
+experts = {'121' '122' '129' '131' '141' '142' '151' '201' '203'};
+all_ids = regexprep(fnames, '_mc.nii.gz','');
+nov_idx = find_group_members(novices, all_ids);
+exp_idx = find_group_members(experts, all_ids);
+
+nov_connectivity = subj_seedvox_z(:,:,nov_idx);
+exp_connectivity = subj_seedvox_z(:,:,exp_idx);
+
+for i=1:numel(seed_masks_2d)
+    [~,expertise_pvals(i,:),~,expertise_stats(i,:)] = ttest(squeeze(exp_connectivity(i,:,:))',squeeze(nov_connectivity(i,:,:))'); % calculate t statistics
+    expertise_t_stats = empty_brain;
+    expertise_t_stats(brain_idx) = stats(i).tstat;
+    write_nii_cc(nii_template, expertise_t_stats, ['local_results/expertise_seed',num2str(seed_vals(i)),'_t.nii']);
+    compress_file = sprintf("gzip local_results/expertise_seed%d_t.nii", seed_vals(i));
+    system(compress_file);
+end
+
+test_brain = niftiread('local_results/expertise_seed397_t.nii.gz');
+test_slice = test_brain(:,:,50);
+
+figure
+imshow(test_slice, [])
+colormap(jet);
+% clim([0 60]);
+title("Test", 'FontSize', 18)
+set(gcf, 'Position', [100, 100, 800, 600])
 
 % Compare individual differences in FC to individual differences in other subject-level measures like task performance, coding experience, etc.:
 behavdata = readtable('/storage2/fmridata/fmri-data-shapes/surveydata.csv'); % CHANGE THIS as needed
@@ -168,6 +191,7 @@ for i=1:numel(seed_masks_2d) % CHANGE THE BEHAVIORAL VARIABLE as needed
     grp_FC_behav_r(brain_idx) = r_FC_behav_seed2roi(i);
     write_nii_cc(nii_template, grp_FC_behav_r, ['/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_results/grp_seed2vox_FC_behav_seed',num2str(i),'_r.nii']); 
 end
+
 
 
 
