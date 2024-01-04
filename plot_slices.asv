@@ -1,0 +1,6 @@
+function plot_slices(brain)
+    num_slices = shape(brain)(3);
+    disp(num_slices)
+    for i=1:num_slices
+    
+end

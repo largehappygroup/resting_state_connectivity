@@ -19,6 +19,8 @@ files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % fi
 % Load a brain mask to limit analyses:
 maskfile = 'mnt/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz'; % change the path as needed
 mask = niftiread(maskfile); % loads the full 91x109x91 mask
+mni_brain_file = 'mnt/analysis/atlases/MNI152_T1_2mm_brain.nii.gz';
+mni_brain = niftiread(mni_brain_file);
 brain_idx = find(mask>0); % identifies only the voxels of the brain
 
 % Load and create an empty template image for writing NIfTI files:
@@ -146,6 +148,7 @@ for i=1:numel(seed_masks_2d)
     grp_seedvox_t = empty_brain;
     grp_seedvox_t(brain_idx) = stats(i).tstat;
 
+
     % break
     write_nii_cc(nii_template, grp_seedvox_t, ['local_results/grp_seedvox',num2str(seed_vals(i)),'_t.nii']);
     compress_file = sprintf("gzip local_results/grp_seedvox%d_t.nii", seed_vals(i));
@@ -160,15 +163,60 @@ exp_idx = find_group_members(experts, all_ids);
 
 nov_connectivity = subj_seedvox_z(:,:,nov_idx);
 exp_connectivity = subj_seedvox_z(:,:,exp_idx);
+mni_slice = mni_brain(:,:,50);
 
 for i=1:numel(seed_masks_2d)
-    [~,expertise_pvals(i,:),~,expertise_stats(i,:)] = ttest(squeeze(exp_connectivity(i,:,:))',squeeze(nov_connectivity(i,:,:))'); % calculate t statistics
-    expertise_t_stats = empty_brain;
-    expertise_t_stats(brain_idx) = stats(i).tstat;
-    write_nii_cc(nii_template, expertise_t_stats, ['local_results/expertise_seed',num2str(seed_vals(i)),'_t.nii']);
-    compress_file = sprintf("gzip local_results/expertise_seed%d_t.nii", seed_vals(i));
-    system(compress_file);
+    fprintf("Seed %d", seed_vals(i))
+    nov_data = squeeze(nov_connectivity(i,:,:))';
+    exp_data = squeeze(exp_connectivity(i,:,:))';
+    
+    [~,expertise_pvals(i,:),~,expertise_stats(i,:)] = ttest2(exp_data,nov_data); % calculate t statistics
+    
+    % corrected_pvals = bonferroni(expertise_pvals(i,:));
+    % 
+    % test = filtered_stats > 0;
+    % disp(sum(test))
+    threshold = benjamini_hochberg(expertise_pvals(i,:));
+    % [~,~,~, adj_p(i,:)] = mafdr(expertise_pvals(i,:), 'BHFDR', false);
+    % significant = expertise_pvals(i,:) < threshold;
+    % filtered_stats = expertise_stats(i,:).tstat;
+    % filtered_stats(expertise_pvals(i,:) >= threshold) = 0;
+    significant_mask = empty_brain;
+    significant_mask(brain_idx) = expertise_pvals(i,:) < threshold;
+    significant_mask = reshape(significant_mask, [91,109,91]);
+    significant_slice = significant_mask(:,:,50);
+    [rows, cols] = find(significant_slice);
+    d = cohens_d(exp_data, nov_data);
+    
+    plot_slices(seed_vals(i), significant_mask, mni_brain)
+
+    % figure;
+    % imshow(mni_slice);
+    % hold on;
+    % plot(cols, rows, 'r.');
+    % set(gcf, 'Position', [100, 100, 800, 600])
+    % titlename = sprintf("Seed %d", seed_vals(i));
+    % title(titlename)
+    % hold off;
+    % outfile_name = sprintf("local_results/seed%d_slice50_expertise.png", seed_vals(i));
+    % saveas(gcf, outfile_name)
+    % test = expertise_pvals(i,:);
+    % temp = sum(test < threshold);
+    % disp(temp)
+ 
+    % expertise_t_stats = empty_brain;
+    % expertise_t_stats(brain_idx) = expertise_stats(i).tstat; % filtered_stats;
+    % 
+    % write_nii_cc(nii_template, expertise_t_stats, ['local_results/expertise_seed',num2str(seed_vals(i)),'_t.nii']);
+    % compress_file = sprintf("gzip local_results/expertise_seed%d_t.nii", seed_vals(i));
+    % system(compress_file);
+    
 end
+
+
+%% TODO - 
+% correct for multiple comparisons
+% only plot the voxels that survive multiple comparisons
 
 test_brain = niftiread('local_results/expertise_seed397_t.nii.gz');
 test_slice = test_brain(:,:,50);
@@ -176,11 +224,11 @@ test_slice = test_brain(:,:,50);
 figure
 imshow(test_slice, [])
 colormap(jet);
-% clim([0 60]);
+clim([0 60]);
 title("Test", 'FontSize', 18)
 set(gcf, 'Position', [100, 100, 800, 600])
 
-% Compare individual differences in FC to individual differences in other subject-level measures like task performance, coding experience, etc.:
+%% Compare individual differences in FC to individual differences in other subject-level measures like task performance, coding experience, etc.:
 behavdata = readtable('/storage2/fmridata/fmri-data-shapes/surveydata.csv'); % CHANGE THIS as needed
 
 for i=1:numel(seed_masks_2d) % CHANGE THE BEHAVIORAL VARIABLE as needed
@@ -241,7 +289,6 @@ set(gca,'xtick',1:numel(all_cortex_network_labels)); set(gca,'xticklabel',all_co
 figure; imagesc(p_FC_behav_net2net); colorbar; title('FC vs. Experience (uncorrected {\itp})'); % to visualize the uncorrected p values
 set(gca,'xtick',1:numel(all_cortex_network_labels)); set(gca,'xticklabel',all_cortex_network_labels); xtickangle(45); set(gca,'ytick',1:numel(all_cortex_network_labels)); set(gca,'yticklabel',all_cortex_network_labels);
 % NOTE that these are symmetrical matrices, and their diagonals are undefined (NaN). So if there are 8 networks, that's (8*7)/2 parallel tests
-
 
 
 
