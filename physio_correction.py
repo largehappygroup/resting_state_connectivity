@@ -1,30 +1,50 @@
+import os
+import glob
 import numpy as np
 import pandas as pd
 import nibabel as nib
 from nilearn.image import clean_img
 
 
-# pathname = '~/fmri/three_studies_raw';
-# files = dir(pathname); for i=3:numel(files) datadirs{i-2} = files(i).name; end
+def downsample(lst, target_length):
+    step = len(lst) // target_length
+    return lst[::step][:target_length]
 
-# % for loop through all folders
-# for i=1:numel(datadirs)
-#     physio_path = sprintf('~/fmri/three_studies_raw/%s/physio',datadirs{i});
+def retroicor(pathname, pid, P): # P is the matrix of physiological data
+    fmri_path = f"{pathname}/{pid}/utrun_01*"
+    matching_file = glob.glob(fmri_path)
+    og_fmri = nib.load(matching_file[0])
+    print("performing retroicor correction")
+    corrected_scan = clean_img(og_fmri, confounds=P)
+    nib.save(corrected_scan, f"{pathname}/{pid}/utprun_01.nii")
     
-#     physio_files={};
-#     if exist(physio_path,'dir')    
-#         inner_dir = dir(physio_path);
-        
-#         for i=3:numel(inner_dir)
-#             datapath = sprintf("%s/%s", physio_path, inner_dir(i).name);
-#             physio_files{i-2} = datapath; 
-#         end
-        
-#         for i=1:numel(physio_files)
-#             regressor = importdata(physio_files{i});
+
+pathname = "/home/zachkaras/fmri/three_studies_raw"
+participants = os.listdir(pathname)
+scan_length = 600 # matching the 600 volumes in the resting state scans
+for pid in participants:
+    physio_path = f"{pathname}/{pid}/physio"
+    try:
+        physio_files = os.listdir(physio_path)
+    except:
+        continue
+    
+    regressors = []
+    print(pid)
+    for f in physio_files:
+        file = open(f"{physio_path}/{f}", 'r')
+        data = file.read()
+        data = data.split("\n")
+        if len(data) <= scan_length:
+            continue
+        downsampled = downsample(data, 600)
+        regressors.append(downsampled)
+    P = np.column_stack(regressors)
+    retroicor(pathname, pid, P)
 
 
-#             disp(size(regressor))
-#         end
-#     end
-# end
+
+
+
+
+
