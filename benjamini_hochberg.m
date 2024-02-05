@@ -1,7 +1,7 @@
 function BH_threshold = benjamini_hochberg(pvals)
     [sorted_p, sort_idx] = sort(pvals);
     m = length(pvals);
-    alpha = 0.01;
+    alpha = 0.05;
     BH_threshold = alpha * (1:m) / m;
     
     

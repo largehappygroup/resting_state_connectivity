@@ -5,24 +5,27 @@ import pandas as pd
 import nibabel as nib
 from nilearn.image import clean_img
 
-
+# the physiological data is collected at different rates, so this sets it to 600 timepoints
 def downsample(lst, target_length):
     step = len(lst) // target_length
     return lst[::step][:target_length]
 
+# actual correction is done here
 def retroicor(pathname, pid, P): # P is the matrix of physiological data
     fmri_path = f"{pathname}/{pid}/utrun_01*"
     matching_file = glob.glob(fmri_path)
     og_fmri = nib.load(matching_file[0])
+    
     print("performing retroicor correction")
     corrected_scan = clean_img(og_fmri, confounds=P)
     nib.save(corrected_scan, f"{pathname}/{pid}/utprun_01.nii")
     
 
-pathname = "/home/zachkaras/fmri/three_studies_raw"
+
+pathname = "/home/zachkaras/fmri/three_studies_raw" # data directory
 participants = os.listdir(pathname)
 scan_length = 600 # matching the 600 volumes in the resting state scans
-for pid in participants:
+for pid in participants: # for loop going through each participant
     physio_path = f"{pathname}/{pid}/physio"
     try:
         physio_files = os.listdir(physio_path)

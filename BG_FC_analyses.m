@@ -11,15 +11,15 @@
 
 % Go to the data:
 % cd('/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed'); % CHANGE THIS to the data directory with the preprocessed fMRI data
-% cd('mnt/codeprose/preprocessed/')
-datapath = 'mnt/motion_corrected/';
+% cd('/home/zachkaras/fmri/codeprose/preprocessed/')
+datapath = '/home/zachkaras/fmri/motion_corrected/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 % Next, make sure that you have a brain mask file and any results or atlas files you want to use to identify seed regions
 % Load a brain mask to limit analyses:
-maskfile = 'mnt/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz'; % change the path as needed
+maskfile = '/home/zachkaras/fmri/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz'; % change the path as needed
 mask = niftiread(maskfile); % loads the full 91x109x91 mask
-mni_brain_file = 'mnt/analysis/atlases/MNI152_T1_2mm_brain.nii.gz';
+mni_brain_file = '/home/zachkaras/fmri/analysis/atlases/MNI152_T1_2mm_brain.nii.gz';
 mni_brain = niftiread(mni_brain_file);
 brain_idx = find(mask>0); % identifies only the voxels of the brain
 
@@ -30,8 +30,8 @@ empty_brain = nii_template.img; % create an empty_brain image in the template's 
 
 % Load any results files or atlases, in 91x109x91 space, if desired (i.e., if not doing a voxel-by-voxel analysis):
 % Here are two example atlases I suggest (ADD THESE to the fmridata directory first!):
-cortex_atlas = niftiread('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % from https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI
-cortex_labels = readtable('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order.lut','ReadVariableNames',0,'FileType','text');
+cortex_atlas = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % from https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI
+cortex_labels = readtable('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order.lut','ReadVariableNames',0,'FileType','text');
 for i=1:size(cortex_labels,1) % if doing network (as opposed to just region-based) analyses, derive a list of network identities from the labels of the networks and regions:
     temp = split(cortex_labels.Var5{i}, '_');
     temp = temp{3};
@@ -39,8 +39,8 @@ for i=1:size(cortex_labels,1) % if doing network (as opposed to just region-base
 end
 all_cortex_network_labels=unique(network_labels);
 
-subcortex_atlas = niftiread('mnt/analysis/atlases/Tian_Subcortex_S1_3T.nii'); % from https://github.com/yetianmed/subcortex/tree/master/Group-Parcellation/3T/Subcortex-Only
-subcortex_labels = readtable('mnt/analysis/atlases/Tian_Subcortex_S1_3T_label.txt','ReadVariableNames',0); % for this particular atlas, only the region names are given (because they're all within the subcortex)
+subcortex_atlas = niftiread('/home/zachkaras/fmri/analysis/atlases/Tian_Subcortex_S1_3T.nii'); % from https://github.com/yetianmed/subcortex/tree/master/Group-Parcellation/3T/Subcortex-Only
+subcortex_labels = readtable('/home/zachkaras/fmri/analysis/atlases/Tian_Subcortex_S1_3T_label.txt','ReadVariableNames',0); % for this particular atlas, only the region names are given (because they're all within the subcortex)
 
 roi_labels = [cortex_labels.Var5; subcortex_labels]; % here I combine the two atlases, with the cortex first and subcortex second, to use both of them together
 
@@ -76,7 +76,7 @@ end
 all_cortex_network_labels{end+1}='Subcortex';
 
 % Here's an example of a result/seed that you might use:
-result_map = niftiread('mnt/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
+result_map = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
 result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
 
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
@@ -128,12 +128,12 @@ for f=1:numel(fnames)
     
 end
 clear rest_data
-save('12032023.mat')
+save('1242024.mat')
     
 %% Analyze group effects:
 % You could analyze the FC data in many ways. Here are a few ideas.
 % If using seed regions:
-subj_seedvox_z = atanh(allsubs_FC_seed2vox); % use Fisher's z transformation to make the correlation coefficients follow a more normal distribution (if wanted)
+subj_seedvox_z = atanh(subj_seedvox); % use Fisher's z transformation to make the correlation coefficients follow a more normal distribution (if wanted)
 
 % Evaluate the group-level effect of the FC from each seed to each voxel (e.g., to visualize results):
 for i=1:numel(seed_masks_2d)
@@ -155,8 +155,19 @@ for i=1:numel(seed_masks_2d)
     system(compress_file);
 end
 
-novices = {'105' '108' '111' '119' '125' '138' '140' '144' '150'};
-experts = {'121' '122' '129' '131' '141' '142' '151' '201' '203'};
+% Just prose study
+% novices = {'105' '108' '111' '119' '125' '138' '140' '144' '150'};
+% experts = {'121' '122' '129' '131' '141' '142' '151' '201' '203'};
+
+% Prose + Data Structures Study
+novices = {'001_161', '003_150', '003_151', '003_203', '003_125', '001_151','001_153','001_154','001_158','001_162',...
+    '001_166','001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142',...
+    '003_144','003_112','003_141','001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129',...
+    '003_138','003_143','003_147'};
+experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101',...
+    '003_102','003_108','003_111','001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203',...
+    '001_169','001_179','001_200','001_202','001_204'};
+
 all_ids = regexprep(fnames, '_mc.nii.gz','');
 nov_idx = find_group_members(novices, all_ids);
 exp_idx = find_group_members(experts, all_ids);
@@ -188,7 +199,7 @@ for i=1:numel(seed_masks_2d)
     [rows, cols] = find(significant_slice);
     d = cohens_d(exp_data, nov_data);
     
-    plot_slices(seed_vals(i), significant_mask, mni_brain)
+    plot_slices(seed_vals(i), significant_mask, mni_brain, "exp_v_nov")
 
     % figure;
     % imshow(mni_slice);

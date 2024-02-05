@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # I'm using this script to get only the files that I need from all three fmri studies
+# The folder hierarchies are slightly different for each study, so I made a different function for copying each  
+
 # Anatomical file: ht1spgr_208sl.nii 
 # Functional file: utrun_01.nii -> shapes study has utprun_01.nii 
 
 # I also need to rename the participants since there's some overlap
+# but you may not need to do that for your data
 get_physio_files(){
       data="$1"
       outdir="$2"
@@ -19,6 +22,7 @@ get_physio_files(){
 }
 
 
+# function for copying files from the mental rotation study 
 copy_shapes(){
       shapes_dir="/storage2/fmridata/fmri-data-shapes/"
       find "$shapes_dir" -maxdepth 1 -type d | while read -r folder; do
@@ -33,9 +37,9 @@ copy_shapes(){
                              func="$wrw_dir/func/rest/run_01/utrun_01.nii"
                              physio="$wrw_dir/raw/physio"
                              get_physio_files "$wrw_dir/raw/" "$newdir/physio"
-                             #mkdir "$newdir"
-                             #cp "$anat" "$newdir"
-                             #cp "$func" "$newdir"
+                             mkdir "$newdir"
+                             cp "$anat" "$newdir"
+                             cp "$func" "$newdir"
                              #echo $newpid $physio $newdir
                        fi
                  done
@@ -54,14 +58,15 @@ copy_review(){
                  anat="$review_dir/$foldername/anatomy/t1spgr_208sl/ht1spgr_208sl.nii"
                  func="$review_dir/$foldername/func/rest/run_01/utprun_01.nii"
                  # code review was already corrected for physiological data
-                 #mkdir "$newdir"
-                 #cp "$anat" "$newdir"
-                 #cp "$func" "$newdir"
+                 mkdir "$newdir"
+                 cp "$anat" "$newdir"
+                 cp "$func" "$newdir"
 
            fi 
       done
 }
 
+# copying code writing data
 copy_writing(){
       writing_dir="/home/zachkaras/fmri/codeprose/"
       find "$writing_dir" -maxdepth 1 -type d | while read -r folder; do
@@ -74,16 +79,16 @@ copy_writing(){
                   func="$folder/utrun_01.nii"
                   physio="/storage2/fmridata/fmri-data-codesynth/$foldername/fmri-scan/raw/physio"
                   get_physio_files "/storage2/fmridata/fmri-data-codesynth/$foldername/fmri-scan/raw" "$newdir/physio"
-                  #mkdir "$newdir"
-                  #cp "$anat" "$newdir"
-                  #cp "$func" "$newdir"
+                  mkdir "$newdir"
+                  cp "$anat" "$newdir"
+                  cp "$func" "$newdir"
 
             fi
       done
 }
 
 copy_shapes
-#copy_review
+copy_review
 copy_writing
 
 

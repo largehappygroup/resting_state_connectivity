@@ -11,27 +11,27 @@ for i=1:numel(fnames)
 
     brain_path = sprintf("home/zachkaras/fmri/preprocessed/%s.nii.gz", name);
     disp(brain_path)
-    brain_data = niftiread(brain_path);
+    %brain_data = niftiread(brain_path);
 
     % find motion parameters file
     motion_filepath = sprintf("home/zachkaras/fmri/three_studies_raw/%s/st_mc.nii.par", name);
     disp(motion_filepath)
 
     % design matrix and data
-    X = make_design_matrix(motion_filepath);
-    Y = reshape(brain_data, [(91*109*91),600])';
+    %X = make_design_matrix(motion_filepath);
+    %Y = reshape(brain_data, [(91*109*91),600])';
 
     % fitting parameters to brain signal
-    b = X\Y;
-    Yhat = X*b;
-    YC = Y-Yhat;
-    YC = reshape(YC', [91,109,91,600]);     
+    %b = X\Y;
+    %Yhat = X*b;
+    %YC = Y-Yhat;
+    %YC = reshape(YC', [91,109,91,600]); % check the dimensions of fMRI data
     
     outfile = sprintf("home/zachkaras/fmri/motion_corrected/%s_mc", name(5:end));
     disp(outfile)
-    niftiwrite(YC, outfile);
-    compress_file = sprintf("gzip home/zachkaras/fmri/motion_corrected/%s_mc.nii", name(5:end));
-    system(compress_file);
+    %niftiwrite(YC, outfile);
+    %compress_file = sprintf("gzip home/zachkaras/fmri/motion_corrected/%s_mc.nii", name(5:end));
+    %system(compress_file);
     toc
 %     break
 
