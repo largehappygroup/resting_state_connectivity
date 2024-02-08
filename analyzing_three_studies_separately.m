@@ -60,60 +60,60 @@ analyze_group_effects(prose_subj_seedvox, seed_masks_2d, seed_vals, brain_idx, m
 
 %%
 % Prose + Data Structures Study
-% novices = {'001_161', '003_150', '003_151', '003_203', '003_125', '001_151','001_153','001_154','001_158','001_162',...
-%     '001_166','001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142',...
-%     '003_144','003_112','003_141','001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129',...
-%     '003_138','003_143','003_147'};
-% experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101',...
-%     '003_102','003_108','003_111','001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203',...
-%     '001_169','001_179','001_200','001_202','001_204'};
+novices = {'001_161', '003_150', '003_151', '003_203', '003_125', '001_151','001_153','001_154','001_158','001_162',...
+    '001_166','001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142',...
+    '003_144','003_112','003_141','001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129',...
+    '003_138','003_143','003_147'};
+experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101',...
+    '003_102','003_108','003_111','001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203',...
+    '001_169','001_179','001_200','001_202','001_204'};
 
 % % Review validation test
 % novices = {'002_302','002_339','002_322','002_351','002_325','002_329','002_340','002_310','002_320','002_336','002_338','002_305','002_416','002_330'};
 % experts = {'002_345','002_314','002_311','002_328','002_412','002_403','002_406','002_411','002_306','002_315','002_400','002_404','002_300','002_409','002_327'};
 
 % Trying novices, intermediate, experts
-novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
-    '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
-interms = {'001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129','003_138','003_143','003_147',...
-    '001_152','001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101','003_102','003_108','003_111'};
-experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
+% novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
+%     '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
+% interms = {'001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129','003_138','003_143','003_147',...
+%     '001_152','001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101','003_102','003_108','003_111'};
+% experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
 
 
 all_ids = regexprep(fnames, '_mc.nii.gz','');
 nov_idx = find_group_members(novices, all_ids);
-int_idx = find_group_members(interms, all_ids);
+% int_idx = find_group_members(interms, all_ids);
 exp_idx = find_group_members(experts, all_ids);
 
 nov_connectivity = super_brain(:,:,nov_idx);
-int_connectivity = super_brain(:,:,int_idx);
+% int_connectivity = super_brain(:,:,int_idx);
 exp_connectivity = super_brain(:,:,exp_idx);
 
 n_nov = size(nov_connectivity,3);
-n_int = size(int_connectivity,3);
+% n_int = size(int_connectivity,3);
 n_exp = size(exp_connectivity,3);
 
 %% Writing Nifti files of experts, intermediates, and novices corresponding to each seed
 for i=1:numel(seed_masks_2d)
     nov_vols = reshape_4d_nifti(n_nov, nov_connectivity(i,:,:), brain_idx, empty_brain);
-    int_vols = reshape_4d_nifti(n_int, int_connectivity(i,:,:), brain_idx, empty_brain);
+    % int_vols = reshape_4d_nifti(n_int, int_connectivity(i,:,:), brain_idx, empty_brain);
     exp_vols = reshape_4d_nifti(n_exp, exp_connectivity(i,:,:), brain_idx, empty_brain);
     
     % write to nifti file for that seed
-    nov_int = cat(4, nov_vols, int_vols);
+    % nov_int = cat(4, nov_vols, int_vols);
     nov_exp = cat(4, nov_vols, exp_vols);
-    % saving novice-intermediate, novice-expert nifti files, then
-    % compressing them
-    filename = sprintf("/home/zachkaras/fmri/results/nov_int_seed%d",seed_vals(i));
-    write_nii_cc(nii_template, nov_int, filename);
-    compress_file = sprintf("gzip /home/zachkaras/fmri/results/nov_int_seed%d.nii", seed_vals(i));
-    system(compress_file);
-
-    filename = sprintf("/home/zachkaras/fmri/results/nov_exp_seed%d",seed_vals(i));
-    write_nii_cc(nii_template, nov_exp, filename);
-    compress_file = sprintf("gzip /home/zachkaras/fmri/results/nov_exp_seed%d.nii", seed_vals(i));
-    system(compress_file);
     
+    % % saving novice-intermediate, novice-expert nifti files, then
+    % % compressing them
+    % filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_int_seed%d",seed_vals(i));
+    % write_nii_cc(nii_template, nov_int, filename);
+    % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_int_seed%d.nii", seed_vals(i));
+    % system(compress_file);
+
+    filename = sprintf("/home/zachkaras/fmri/midprocessing/two_groups_nov_exp_seed%d",seed_vals(i));
+    write_nii_cc(nii_template, nov_exp, filename);
+    compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/two_groups_nov_exp_seed%d.nii", seed_vals(i));
+    system(compress_file);
 end
 
 % mni_slice = mni_brain(:,:,50);
