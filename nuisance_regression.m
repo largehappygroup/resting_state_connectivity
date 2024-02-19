@@ -7,7 +7,7 @@ for i=1:numel(fnames)
     name = regexp(fnames{i}, '.nii.gz', 'split');
     name = name{1};
     
-    fprintf("regressing out nuissances for %s\n", name)
+    fprintf("regressing out nuisances for %s\n", name)
 
     brain_path = sprintf("home/zachkaras/fmri/preprocessed/%s.nii.gz", name);
     disp(brain_path)

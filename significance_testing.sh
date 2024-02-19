@@ -1,6 +1,5 @@
 #/bin/bash
 
-
 # iterating through correlation maps for each seed region
 for file in ../midprocessing/*.nii.gz; do
       GROUP="${file:17:26}" # getting the specific group names (e.g., nov_exp_seed008)

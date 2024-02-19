@@ -33,11 +33,11 @@ copy_shapes(){
                        if [ -d "$wrw_dir" ]; then
                              newpid="001_$foldername"
                              newdir="/home/zachkaras/fmri/three_studies_raw/$newpid/"
+                             mkdir "$newdir"
                              anat="$wrw_dir/anatomy/t1spgr_208sl/ht1spgr_208sl.nii"
                              func="$wrw_dir/func/rest/run_01/utrun_01.nii"
                              physio="$wrw_dir/raw/physio"
                              get_physio_files "$wrw_dir/raw/" "$newdir/physio"
-                             mkdir "$newdir"
                              cp "$anat" "$newdir"
                              cp "$func" "$newdir"
                              #echo $newpid $physio $newdir
@@ -55,10 +55,10 @@ copy_review(){
                  newpid="002_${foldername:10:3}"
                  newdir="/home/zachkaras/fmri/three_studies_raw/$newpid/"
                  echo "$newpid"
+                 mkdir "$newdir"
                  anat="$review_dir/$foldername/anatomy/t1spgr_208sl/ht1spgr_208sl.nii"
                  func="$review_dir/$foldername/func/rest/run_01/utprun_01.nii"
                  # code review was already corrected for physiological data
-                 mkdir "$newdir"
                  cp "$anat" "$newdir"
                  cp "$func" "$newdir"
 
@@ -68,18 +68,18 @@ copy_review(){
 
 # copying code writing data
 copy_writing(){
-      writing_dir="/home/zachkaras/fmri/codeprose/"
+      writing_dir="/storage2/fmridata/fmri-data-codesynth/"
       find "$writing_dir" -maxdepth 1 -type d | while read -r folder; do
-            foldername="${folder:31}"
-            if echo "$foldername" | grep -E -q '^[0-9]{3}'; then
-                  echo "$foldername"
+            foldername="${folder:39}"
+            if echo "$foldername" | grep -E -q '^[0-9]{3}$'; then
+                  echo "$foldername" 
                   newpid="003_$foldername"
                   newdir="/home/zachkaras/fmri/three_studies_raw/$newpid/"
-                  anat="$folder/ht1spgr_208sl.nii"
-                  func="$folder/utrun_01.nii"
+                  mkdir "$newdir"
+                  anat="$folder/fmri-scan/anatomy/t1spgr_208sl/ht1spgr_208sl.nii"
+                  func="$folder/fmri-scan/func/rest/run_01/utrun_01.nii"
                   physio="/storage2/fmridata/fmri-data-codesynth/$foldername/fmri-scan/raw/physio"
                   get_physio_files "/storage2/fmridata/fmri-data-codesynth/$foldername/fmri-scan/raw" "$newdir/physio"
-                  mkdir "$newdir"
                   cp "$anat" "$newdir"
                   cp "$func" "$newdir"
 
@@ -87,8 +87,8 @@ copy_writing(){
       done
 }
 
-copy_shapes
-copy_review
+#copy_shapes
+#copy_review
 copy_writing
 
 
