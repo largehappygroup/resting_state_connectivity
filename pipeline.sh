@@ -1,7 +1,6 @@
 #!/bin/bash
 
-extract_functional(){
-      echo "extracting functional scan"
+mask_functional(){
       fslsplit "$1/st_mc.nii.gz" temp_vol -t
       
       ls temp_vol*.nii.gz | nice parallel "fslmaths {} -mas $1/resampled_anatomical_mask.nii.gz {}_brain"
@@ -31,17 +30,14 @@ preprocess(){
       flirt -in "$3/BrainExtractionMask.nii.gz" -ref "$3/reference.nii.gz" -out "$3/resampled_anatomical_mask.nii.gz" -applyxfm -usesqform
 
       echo "masking functional scan"
-      extract_functional $3
+      mask_functional $3
 
-      echo "registration to anatomical scan"
-      # epi_reg --epi="$3/reference.nii.gz" \
-      #         --t1=$1 \
-      #         --t1brain="$3/BrainExtractionBrain.nii.gz" \
-      #         --out="$3/subject_registration.nii" \
+      echo "rigid registration to anatomical scan"
       antsRegistrationSyNQuick.sh -d 3 \
             -f $1 \
             -m "$3/reference.nii.gz" \
             -o "$3/epi_2_anat_" \
+            -t r
 
       echo "registration to MNI"
       antsRegistrationSyNQuick.sh -d 3 \
@@ -53,21 +49,18 @@ preprocess(){
       register_functional "$3/func_brain.nii" $3 
       
       echo "smoothing"
-      fslmaths "$3/raw_mc_epi2mni.nii" -kernel gauss 3 -fmean "$3/all_warped.nii"
+      fslmaths "$3/raw_mc_epi2mni.nii" -kernel gauss 3 -fmean "$3/filtered_func_data.nii"
 }
 
 # for loop going through all participant folders 
-count=0
-
-find ../temp2/ -maxdepth 1 -type d | while read -r folder; do
-      foldername="${folder:9}"
+find ../three_studies_raw/ -maxdepth 1 -type d | while read -r folder; do
+      foldername="${folder:21}"
       if [[ "$foldername" =~  ^[0-9]{3}_[0-9]{3}$ ]]; then
-            echo $foldername
-            mkdir "../temp2/out_$foldername" 
+            mkdir "../three_studies_raw/out_$foldername" 
             echo "Processing folder $foldername"
-            ANATFILE="../temp2/$foldername/ht1spgr_208sl.nii"
-            FUNCFILE="../temp2/$foldername/utrun_01.nii"
-            OUT="../temp2/out_$foldername"
+            ANATFILE="../three_studies_raw/$foldername/ht1spgr_208sl.nii"
+            FUNCFILE="../three_studies_raw/$foldername/utrun_01.nii"
+            OUT="../three_studies_raw/out_$foldername"
             preprocess $ANATFILE $FUNCFILE $OUT
       fi
 done
