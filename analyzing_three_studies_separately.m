@@ -42,7 +42,7 @@ struct_sub_seedvox_z = atanh(struct_subj_seedvox);
 review_sub_seedvox_z = atanh(review_subj_seedvox);
 prose_sub_seedvox_z = atanh(prose_subj_seedvox);
 
-seed_vals = [8, 70, 74, 192, 271, 378, 396, 397];
+seed_vals = [58,133,192,339,377,395];
 
 plot_correlations(seed_masks_2d, seed_vals, struct_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "struct")
 plot_correlations(seed_masks_2d, seed_vals, review_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "review")

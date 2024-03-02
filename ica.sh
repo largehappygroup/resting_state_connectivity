@@ -26,21 +26,19 @@ format_for_fix(){
 }
 
 perform_fix(){
-      ~/fix/fix -c "$1" ~/fix/training_files/UKBiobank.RData 20
+      ~/fix/fix -c "$1" ~/fmri/analysis/ICSE25.RData 20
 }
 
-# read out folders in output directory
-
-# enter each one
-
-# perform melodic
-#melodic -i '/home/zachkaras/fmri/temp2/out_001_151/raw_mc_epi2mni.nii.gz' -d 60 -o '/home/zachkaras/fmri/temp2/out_001_151/ica_60comps' --Oorig --report --tr=0.8 -v
-
-# perform steps for running FIX
-
 # for loop here for going through output directories  
-datadir="/home/zachkaras/fmri/out_003_111"
-perform_ica "$datadir"
-format_for_fix "$datadir"
-perform_fix "$datadir"
+find "/home/zachkaras/fmri/temp/" -maxdepth 1 -type d | while read -r folder; do
+      foldername="${folder:26}"
+      if [[ "$foldername" =~ "out" ]]; then
+            echo "$foldername"
+            datadir="/home/zachkaras/fmri/temp/$foldername"
+            #perform_ica "$datadir"
+            #format_for_fix "$datadir"
+            perform_fix "$datadir"
+      fi
+done
+
 
