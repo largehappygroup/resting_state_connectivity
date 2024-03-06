@@ -35,37 +35,37 @@ for f=1:numel(fnames)
 end
 % Z-transforming the data to make it normally distributed
 struct_subj_seedvox(isnan(struct_subj_seedvox))=0;
-review_subj_seedvox(isnan(review_subj_seedvox))=0;
+% review_subj_seedvox(isnan(review_subj_seedvox))=0;
 prose_subj_seedvox(isnan(prose_subj_seedvox))=0;
 
 struct_sub_seedvox_z = atanh(struct_subj_seedvox);
-review_sub_seedvox_z = atanh(review_subj_seedvox);
+% review_sub_seedvox_z = atanh(review_subj_seedvox);
 prose_sub_seedvox_z = atanh(prose_subj_seedvox);
 
 seed_vals = [58,133,192,339,377,395];
 
 plot_correlations(seed_masks_2d, seed_vals, struct_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "struct")
-plot_correlations(seed_masks_2d, seed_vals, review_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "review")
+% plot_correlations(seed_masks_2d, seed_vals, review_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "review")
 plot_correlations(seed_masks_2d, seed_vals, prose_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "prose")
 
 % All studies together
-super_brain = cat(3, struct_sub_seedvox_z, review_sub_seedvox_z, prose_sub_seedvox_z);
+super_brain = cat(3, struct_sub_seedvox_z, prose_sub_seedvox_z); % leaving out review
 
 plot_correlations(seed_masks_2d, seed_vals, super_brain, mni_brain, empty_brain, brain_idx, "all")
 
 % Mostly for getting t-stats and p-values
 analyze_group_effects(struct_subj_seedvox, seed_masks_2d, seed_vals, brain_idx, mni_brain, nii_template, "struct");
-analyze_group_effects(review_subj_seedvox, seed_masks_2d, seed_vals, brain_idx, mni_brain, nii_template, "review");
+% analyze_group_effects(review_subj_seedvox, seed_masks_2d, seed_vals, brain_idx, mni_brain, nii_template, "review");
 analyze_group_effects(prose_subj_seedvox, seed_masks_2d, seed_vals, brain_idx, mni_brain, nii_template, "prose");
 
 %%
 % Prose + Data Structures Study
-novices = {'001_161', '003_150', '003_151', '003_203', '003_125', '001_151','001_153','001_154','001_158','001_162',...
-    '001_166','001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142',...
+novices = {'001_161', '003_150', '003_151', '003_203', '003_125', '001_151','001_153','001_154','001_162',...
+    '001_166','001_167','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142',...
     '003_144','003_112','003_141','001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129',...
-    '003_138','003_143','003_147'};
-experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101',...
-    '003_102','003_108','003_111','001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203',...
+    '003_138'};
+experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_181','001_182','001_183','003_101',...
+    '003_102','003_108','003_111','001_159','001_168','001_176','003_201','001_172','001_201','001_171','001_203',...
     '001_169','001_179','001_200','001_202','001_204'};
 
 % % Review validation test
@@ -80,31 +80,47 @@ experts = {'001_152', '001_156','001_157','001_163','001_174','001_177','001_178
 % experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
 
 
-all_ids = regexprep(fnames, '_mc.nii.gz','');
+% Gender Comparison
+women = {'001_152','001_154','001_155','001_157','001_158','001_162','001_165','001_166','001_171','001_176','001_177','001_178','001_180','001_181','001_183','001_200','001_201','003_101','003_109','003_119','003_129','003_130','003_140','003_142','003_147','003_203'};
+men = {'001_151','001_153','001_156','001_159','001_160','001_161','001_163','001_167','001_168','001_169','001_170','001_172','001_173','001_174','001_175','001_179','001_182','001_202','001_203','001_204','003_102','003_105','003_111','003_112','003_118','003_121','003_122','003_125','003_131','003_133','003_134','003_138','003_141','003_143','003_144','003_150','003_151','003_201'};
+
+
+all_ids = regexprep(fnames, '.nii.gz','');
 nov_idx = find_group_members(novices, all_ids);
 % int_idx = find_group_members(interms, all_ids);
 exp_idx = find_group_members(experts, all_ids);
+men_idx = find_group_members(men, all_ids);
+wom_idx = find_group_members(women, all_ids);
+
 
 nov_connectivity = super_brain(:,:,nov_idx);
 % int_connectivity = super_brain(:,:,int_idx);
 exp_connectivity = super_brain(:,:,exp_idx);
+men_connectivity = super_brain(:,:,men_idx);
+wom_connectivity = super_brain(:,:,wom_idx);
 
 n_nov = size(nov_connectivity,3);
 % n_int = size(int_connectivity,3);
 n_exp = size(exp_connectivity,3);
+n_men = size(men_connectivity,3);
+n_wom = size(wom_connectivity,3);
 
 %% Writing Nifti files of experts, intermediates, and novices corresponding to each seed
 for i=1:numel(seed_masks_2d)
     nov_vols = reshape_4d_nifti(n_nov, nov_connectivity(i,:,:), brain_idx, empty_brain);
     % int_vols = reshape_4d_nifti(n_int, int_connectivity(i,:,:), brain_idx, empty_brain);
     exp_vols = reshape_4d_nifti(n_exp, exp_connectivity(i,:,:), brain_idx, empty_brain);
-    
+    men_vols = reshape_4d_nifti(n_men, men_connectivity(i,:,:), brain_idx, empty_brain);
+    wom_vols = reshape_4d_nifti(n_wom, wom_connectivity(i,:,:), brain_idx, empty_brain);
+
     % write to nifti file for that seed
     % nov_int = cat(4, nov_vols, int_vols);
     nov_exp = cat(4, nov_vols, exp_vols);
+    men_wom = cat(4, men_vols, wom_vols);
+
     
-    % % saving novice-intermediate, novice-expert nifti files, then
-    % % compressing them
+    % saving novice-intermediate, novice-expert nifti files, then
+    % compressing them
     % filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_int_seed%d",seed_vals(i));
     % write_nii_cc(nii_template, nov_int, filename);
     % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_int_seed%d.nii", seed_vals(i));
@@ -114,6 +130,11 @@ for i=1:numel(seed_masks_2d)
     write_nii_cc(nii_template, nov_exp, filename);
     compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/two_groups_nov_exp_seed%d.nii", seed_vals(i));
     system(compress_file);
+    % 
+    % filename = sprintf("/home/zachkaras/fmri/midprocessing/men_wom_seed%d",seed_vals(i));
+    % write_nii_cc(nii_template, men_wom, filename);
+    % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/men_wom_seed%d.nii", seed_vals(i));
+    % system(compress_file);
 end
 
 % mni_slice = mni_brain(:,:,50);

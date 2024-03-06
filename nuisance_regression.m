@@ -1,20 +1,24 @@
 % for loop iterating through participants in preprocessed folder
-datapath = "home/zachkaras/fmri/preprocessed/";
+datapath = "/home/zachkaras/fmri/three_studies_raw/";
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end
 
 for i=1:numel(fnames)
     tic
-    name = regexp(fnames{i}, '.nii.gz', 'split');
-    name = name{1};
+    if isempty(regexp(fnames{i}, 'out'))
+        continue
+    end
+    name = fnames{i};
+    % name = regexp(fnames{i}, '.nii.gz', 'split');
+    % name = name{1};
     
     fprintf("regressing out nuisances for %s\n", name)
 
-    brain_path = sprintf("home/zachkaras/fmri/preprocessed/%s.nii.gz", name);
-    disp(brain_path)
+    brain_path = sprintf("home/zachkaras/fmri/three_studies_raw/%s/filtered_func_data_clean.nii.gz", name);
+    % disp(brain_path)
     brain_data = niftiread(brain_path);
 
     % find motion parameters file
-    motion_filepath = sprintf("home/zachkaras/fmri/three_studies_raw/%s/st_mc.nii.par", name);
+    motion_filepath = sprintf("home/zachkaras/fmri/three_studies_raw/%s/mc/prefiltered_func_data_mcf.par", name);
     disp(motion_filepath)
 
     % design matrix and data
@@ -26,11 +30,11 @@ for i=1:numel(fnames)
     Yhat = X*b;
     YC = Y-Yhat;
     YC = reshape(YC', [91,109,91,600]);     
-    
-    outfile = sprintf("home/zachkaras/fmri/motion_corrected/%s_mc", name(5:end));
+    % 
+    outfile = sprintf("/home/zachkaras/fmri/preprocessed/%s", name(5:end));
     disp(outfile)
     niftiwrite(YC, outfile);
-    compress_file = sprintf("gzip home/zachkaras/fmri/motion_corrected/%s_mc.nii", name(5:end));
+    compress_file = sprintf("gzip /home/zachkaras/fmri/preprocessed/%s.nii", name(5:end));
     system(compress_file);
     toc
 %     break
@@ -42,7 +46,7 @@ function X = make_design_matrix(path)
     n = 600; % num volumes
     mean_offset = ones(n,1);
     linear_trend = (1:n)';
-    quad_trend = (1:n)'.^2;
+    % quad_trend = (1:n)'.^2;
 
     % load parameters (clip to 600 volumes)
     Motion = importdata(path);
@@ -50,5 +54,6 @@ function X = make_design_matrix(path)
     dMP = diff(Motion);
     dMP = [dMP(1,:); dMP];
 
-    X = [mean_offset, linear_trend, quad_trend, Motion, dMP];
+    % removed quadratic trend because all the timecourses turned into parabolas
+    X = [mean_offset, linear_trend, Motion, dMP]; 
 end

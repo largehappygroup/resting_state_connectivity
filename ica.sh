@@ -29,15 +29,20 @@ perform_fix(){
       ~/fix/fix -c "$1" ~/fmri/analysis/ICSE25.RData 20
 }
 
+remove_components(){
+      ~/fix/fix -a "$1/fix4melview_ICSE25_thr20.txt"
+}
+
 # for loop here for going through output directories  
-find "/home/zachkaras/fmri/temp/" -maxdepth 1 -type d | while read -r folder; do
-      foldername="${folder:26}"
+find "/home/zachkaras/fmri/three_studies_raw/" -maxdepth 1 -type d | while read -r folder; do
+      foldername="${folder:39}"
       if [[ "$foldername" =~ "out" ]]; then
             echo "$foldername"
-            datadir="/home/zachkaras/fmri/temp/$foldername"
+            datadir="/home/zachkaras/fmri/three_studies_raw/$foldername"
             #perform_ica "$datadir"
             #format_for_fix "$datadir"
-            perform_fix "$datadir"
+            #perform_fix "$datadir"
+            remove_components "$datadir"
       fi
 done
 

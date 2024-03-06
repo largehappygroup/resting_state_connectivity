@@ -12,7 +12,7 @@
 % Go to the data:
 % cd('/storage2/fmridata/fmri-data-shapes/fmri-scans/rest_preprocessed'); % CHANGE THIS to the data directory with the preprocessed fMRI data
 % cd('/home/zachkaras/fmri/codeprose/preprocessed/')
-datapath = '/home/zachkaras/fmri/motion_corrected/';
+datapath = '/home/zachkaras/fmri/preprocessed/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 % Next, make sure that you have a brain mask file and any results or atlas files you want to use to identify seed regions
@@ -82,7 +82,9 @@ result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
 % seed_vals = [1,2,3];
 %seed_vals = [8, 17, 71, 136, 209, 216, 309, 376];
-seed_vals = [8, 70, 74, 192, 271, 378, 396, 397];
+% seed_vals = [8, 70, 74, 192, 271, 378, 396, 397];
+seed_vals = [58,133,192,339,377,395]; % Updated 3/3/20204
+
 for i=1:numel(seed_vals)
     seed_masks_2d{i} = find(result_map_2d_brain == seed_vals(i));
 end
