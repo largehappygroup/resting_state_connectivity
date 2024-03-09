@@ -129,8 +129,8 @@ for f=1:numel(fnames)
     % allsubs_FC_net2net(:,:,f) = FC_net2net; % save the results
     
 end
-clear rest_data
-save('1242024.mat')
+% clear rest_data
+% save('1242024.mat')
     
 %% Analyze group effects:
 % You could analyze the FC data in many ways. Here are a few ideas.
