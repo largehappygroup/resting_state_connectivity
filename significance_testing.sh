@@ -7,25 +7,26 @@ for file in ../midprocessing/*.nii.gz; do
       if [[ $GROUP =~ "two_groups" ]]; then
             DESIGN="two_groups_design.mat"
             #T=2.00;
-            #continue
+            continue
       elif [[ $GROUP =~ "exp" ]]; then 
             DESIGN="nov_exp_design.mat" 
             #T=2.03; 
-            continue
+            #continue
       elif [[ $GROUP =~ "int" ]]; then 
             DESIGN="nov_int_design.mat" 
             #T=2.02;
-            continue
+            #continue
       elif [[ $GROUP =~ "men" ]]; then
             DESIGN="men_wom_design.mat"
             continue
       fi
-      GROUP="${file:17:18}"
+      GROUP="${file:17:15}"
       OUTFILE="../results/${GROUP}"
+      #echo "$file"
       echo "$GROUP" 
-      nice -n 20 randomise_parallel -i "$file" -o "$OUTFILE" -d "$DESIGN" -t design.con -m atlases/MNI152_T1_2mm_brain_mask.nii.gz -n 5000 -T
+      #nice -n 20 randomise_parallel -i "$file" -o "$OUTFILE" -d "$DESIGN" -t design.con -m atlases/MNI152_T1_2mm_brain_mask.nii.gz -n 5000 -T --uncorrp 
       
-      NEW_INPUT1="${OUTFILE}_tfce_corrp_tstat1.nii.gz"
+      NEW_INPUT1="${OUTFILE}_tfce_p_tstat1.nii.gz"
       NEW_INPUT2="${OUTFILE}_tstat1.nii.gz"
       NEW_OUTPUT="${OUTFILE}_thresh"
 

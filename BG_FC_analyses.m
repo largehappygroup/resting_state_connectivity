@@ -83,7 +83,9 @@ result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
 % seed_vals = [1,2,3];
 %seed_vals = [8, 17, 71, 136, 209, 216, 309, 376];
 % seed_vals = [8, 70, 74, 192, 271, 378, 396, 397];
-seed_vals = [58,133,192,339,377,395]; % Updated 3/3/20204
+% seed_vals = [58,133,192,339,377,395]; % Updated 3/3/2024
+seed_vals = [133,172,192,284,339,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
+% seed_vals = [9,67,176,183,231,242,341,343,348,380,386,389,391]; % Data driven, updated 3/11/2024
 
 for i=1:numel(seed_vals)
     seed_masks_2d{i} = find(result_map_2d_brain == seed_vals(i));

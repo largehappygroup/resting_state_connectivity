@@ -10,14 +10,17 @@ mask = niftiread(maskfile); % loads the full 91x109x91 mask
 brain_idx = find(mask>0); % identifies only the voxels of the brain
 
 atlas = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
-atlas_2dbrain = atlas(brain_idx); % reshapes to 2d within the brain
+atlas_2d_brain = atlas(brain_idx); % reshapes to 2d within the brain
 
 % iterate through Schaefer atlas to get indices for each parcel
 for i=1:400
-    parcels{i} = find(atlas_2dbrain == i);
+    parcels{i} = find(atlas_2d_brain == i);
 end
 
-seed_vals = [58,133,192,339,377,395]; % Updated 3/3/20204
+% seed_vals = [58,133,192,339,377,395]; % Updated 3/3/20204
+% seed_vals = [133,172,192,284,339,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
+seed_vals = [9,67,176,183,231,242,341,343,348,380,386,389,391]; % Data driven, updated 3/11/2024
+% seed_vals = [9,67,133,172,176,183,192,231,242,284,339,341,343,348,380,386,389,391,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
 
 % for i=1:numel(seed_vals)
 %     seed_masks_2d{i} = find(atlas_2dbrain == seed_vals(i));
@@ -40,18 +43,35 @@ for f=1:numel(fnames)
 
     for s=1:numel(seed_vals)
         seed_timecourse = timecourses(seed_vals(s),:);
-        [Correlations(f,:,s), p_vals(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');
+        [Correlations_data_driven(f,:,s), p_vals_data_driven(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');
         
     end
     toc
 end
 
-Correlationz = atanh(Correlations);
+Correlationz_data_driven = atanh(Correlations_data_driven);
+
+novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
+    '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
+interms = {'001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129','003_138','003_143','003_147',...
+    '001_152','001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101','003_102','003_108','003_111'};
+experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
+
+all_ids = regexprep(fnames, '.nii','');
+nov_idx = find_group_members(novices, all_ids);
+int_idx = find_group_members(interms, all_ids);
+exp_idx = find_group_members(experts, all_ids);
+
+nov_connectivity = Correlationz_data_driven(nov_idx,:,:);
+int_connectivity = Correlationz_data_driven(int_idx,:,:);
+exp_connectivity = Correlationz_data_driven(exp_idx,:,:);
+
+
 
 for i=1:numel(seed_vals)
-    temp = Correlationz(:,:,i);
+    temp = Correlationz_data_driven(:,:,i);
     temp(:,seed_vals(i)) = [];
-    Correlationz2(:,:,i) = temp;
+    Correlationz_data_driven2(:,:,i) = temp;
 end
 
 for i=1:numel(seed_vals)
@@ -66,39 +86,39 @@ for i=1:numel(seed_vals)
 end
 
 
-% t-tests
-novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
-    '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
-interms = {'001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129','003_138','003_143','003_147',...
-    '001_152','001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101','003_102','003_108','003_111'};
-experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
+% % t-tests
+% novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
+%     '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
+% interms = {'001_155','001_160','001_165','001_173','003_105','003_109','003_118','003_122','003_129','003_138','003_143','003_147',...
+%     '001_152','001_156','001_157','001_163','001_174','001_177','001_178','001_181','001_182','001_183','003_101','003_102','003_108','003_111'};
+% experts = {'001_159','001_168','001_176','001_180','003_201','001_172','001_201','001_171','001_203','001_169','001_179','001_200','001_202','001_204'};
 
-women = {'001_152','001_154','001_155','001_157','001_158','001_162','001_165','001_166','001_171','001_176','001_177', ...
-    '001_178','001_180','001_181','001_183','001_200','001_201','003_101','003_109','003_119','003_129','003_130','003_140', ...
-    '003_142','003_147','003_203'};
-men = {'001_151','001_153','001_156','001_159','001_160','001_161','001_163','001_167','001_168','001_169','001_170','001_172', ...
-    '001_173','001_174','001_175','001_179','001_182','001_202','001_203','001_204','003_102','003_105','003_111','003_112','003_118', ...
-    '003_121','003_122','003_125','003_131','003_133','003_134','003_138','003_141','003_143','003_144','003_150','003_151','003_201'};
+% women = {'001_152','001_154','001_155','001_157','001_158','001_162','001_165','001_166','001_171','001_176','001_177', ...
+%     '001_178','001_180','001_181','001_183','001_200','001_201','003_101','003_109','003_119','003_129','003_130','003_140', ...
+%     '003_142','003_147','003_203'};
+% men = {'001_151','001_153','001_156','001_159','001_160','001_161','001_163','001_167','001_168','001_169','001_170','001_172', ...
+%     '001_173','001_174','001_175','001_179','001_182','001_202','001_203','001_204','003_102','003_105','003_111','003_112','003_118', ...
+%     '003_121','003_122','003_125','003_131','003_133','003_134','003_138','003_141','003_143','003_144','003_150','003_151','003_201'};
+% 
+% men_novices = {'001_151','001_153','001_160','001_161','001_167','001_173','001_175','003_105','003_112','003_118', ...
+%     '003_121','003_122','003_125','003_131','003_133','003_134','003_138','003_141','003_144','003_150','003_151'};
+% wom_novices = {'001_154','001_155','001_162','001_165','001_166','003_109','003_119','003_129','003_130','003_140','003_142','003_203',};
+% men_experts = {'001_156','001_159','001_163','001_168','001_169','001_172','001_174','001_179','001_182','001_202','001_203','001_204',...
+%     '003_102','003_108','003_111','003_201',};
+% wom_experts = {'001_152','001_157','001_171','001_176','001_177','001_181','001_183','001_200','001_201','003_101',};
 
-men_novices = {'001_151','001_153','001_160','001_161','001_167','001_173','001_175','003_105','003_112','003_118', ...
-    '003_121','003_122','003_125','003_131','003_133','003_134','003_138','003_141','003_144','003_150','003_151'};
-wom_novices = {'001_154','001_155','001_162','001_165','001_166','003_109','003_119','003_129','003_130','003_140','003_142','003_203',};
-men_experts = {'001_156','001_159','001_163','001_168','001_169','001_172','001_174','001_179','001_182','001_202','001_203','001_204',...
-    '003_102','003_108','003_111','003_201',};
-wom_experts = {'001_152','001_157','001_171','001_176','001_177','001_181','001_183','001_200','001_201','003_101',};
 
 
-
-all_ids = regexprep(fnames, '.nii.gz','');
+% all_ids = regexprep(fnames, '.nii.gz','');
 % nov_idx = find_group_members(novices, all_ids);
 % int_idx = find_group_members(interms, all_ids);
 % exp_idx = find_group_members(experts, all_ids);
 % men_idx = find_group_members(men, all_ids);
 % wom_idx = find_group_members(women, all_ids);
-men_nov_idx = find_group_members(men_novices, all_ids);
-wom_nov_idx = find_group_members(wom_novices, all_ids);
-men_exp_idx = find_group_members(men_experts, all_ids);
-wom_exp_idx = find_group_members(wom_experts, all_ids);
+% men_nov_idx = find_group_members(men_novices, all_ids);
+% wom_nov_idx = find_group_members(wom_novices, all_ids);
+% men_exp_idx = find_group_members(men_experts, all_ids);
+% wom_exp_idx = find_group_members(wom_experts, all_ids);
 
 % 
 % nov_connectivity = Correlationz(nov_idx,:,:);
@@ -106,10 +126,10 @@ wom_exp_idx = find_group_members(wom_experts, all_ids);
 % exp_connectivity = Correlationz(exp_idx,:,:);
 % men_connectivity = Correlationz(men_idx,:,:);
 % wom_connectivity = Correlationz(wom_idx,:,:);
-men_nov_connectivity = Correlationz2(men_nov_idx,:,:);
-wom_nov_connectivity = Correlationz2(wom_nov_idx,:,:);
-men_exp_connectivity = Correlationz2(men_exp_idx,:,:);
-wom_exp_connectivity = Correlationz2(wom_exp_idx,:,:);
+% men_nov_connectivity = Correlationz2(men_nov_idx,:,:);
+% wom_nov_connectivity = Correlationz2(wom_nov_idx,:,:);
+% men_exp_connectivity = Correlationz2(men_exp_idx,:,:);
+% wom_exp_connectivity = Correlationz2(wom_exp_idx,:,:);
 
 % 
 % 
@@ -121,47 +141,49 @@ wom_exp_connectivity = Correlationz2(wom_exp_idx,:,:);
 
 for i=1:numel(seed_vals)
     fprintf("\nSeed %d\n", seed_vals(i))
-    % nov_data = squeeze(nov_connectivity(:,:,i));
-    % int_data = squeeze(int_connectivity(:,:,i));
-    % exp_data = squeeze(exp_connectivity(:,:,i));
+    nov_data = squeeze(nov_connectivity(:,:,i));
+    int_data = squeeze(int_connectivity(:,:,i));
+    exp_data = squeeze(exp_connectivity(:,:,i));
 
-    men_nov_data = squeeze(men_nov_connectivity(:,:,i));
-    wom_nov_data = squeeze(wom_nov_connectivity(:,:,i));
-    men_exp_data = squeeze(men_exp_connectivity(:,:,i));
-    wom_exp_data = squeeze(wom_exp_connectivity(:,:,i));
+    % men_nov_data = squeeze(men_nov_connectivity(:,:,i));
+    % wom_nov_data = squeeze(wom_nov_connectivity(:,:,i));
+    % men_exp_data = squeeze(men_exp_connectivity(:,:,i));
+    % wom_exp_data = squeeze(wom_exp_connectivity(:,:,i));
     
-    % [~,nov_exp_pvals(i,:),~,nov_exp_stats(i,:)] = ttest2(nov_data, exp_data); % calculate t statistics
-    % [~,nov_int_pvals(i,:),~,nov_int_stats(i,:)] = ttest2(nov_data, int_data); % calculate t statistics
-    [~,men_v_men_pvals(i,:),~,men_v_men_stats(i,:)] = ttest2(men_nov_data, men_exp_data); % calculate t statistics
-    [~,wom_v_wom_pvals(i,:),~,wom_v_wom_stats(i,:)] = ttest2(wom_nov_data, wom_exp_data); % calculate t statistics
-    [~,men_v_wom_exp_pvals(i,:),~,men_v_wom_exp_stats(i,:)] = ttest2(men_exp_data, wom_exp_data); % calculate t statistics
-    [~,men_v_wom_nov_pvals(i,:),~,men_v_wom_nov_stats(i,:)] = ttest2(men_nov_data, wom_nov_data); % calculate t statistics
-    [ne_m_h, ne_m_crit_p, ne_m_adj_ci_cvrg, ne_m_adj_p]=fdr_bh(men_v_men_pvals(i,:),0.05);
-    [ne_w_h, ne_w_crit_p, ne_w_adj_ci_cvrg, ne_w_adj_p]=fdr_bh(wom_v_wom_pvals(i,:),0.05);
-    [n_m_w_h, n_m_w_crit_p, n_m_w_adj_ci_cvrg, n_m_w_adj_p]=fdr_bh(men_v_wom_nov_pvals(i,:),0.05);
-    [e_m_w_h, e_m_w_crit_p, e_m_w_adj_ci_cvrg, e_m_w_adj_p]=fdr_bh(men_v_wom_exp_pvals(i,:),0.05);
+    [~,nov_exp_pvals(i,:),~,nov_exp_stats(i,:)] = ttest2(nov_data, exp_data); % calculate t statistics
+    [~,nov_int_pvals(i,:),~,nov_int_stats(i,:)] = ttest2(nov_data, int_data); % calculate t statistics
+    % [~,men_v_men_pvals(i,:),~,men_v_men_stats(i,:)] = ttest2(men_nov_data, men_exp_data); % calculate t statistics
+    % [~,wom_v_wom_pvals(i,:),~,wom_v_wom_stats(i,:)] = ttest2(wom_nov_data, wom_exp_data); % calculate t statistics
+    % [~,men_v_wom_exp_pvals(i,:),~,men_v_wom_exp_stats(i,:)] = ttest2(men_exp_data, wom_exp_data); % calculate t statistics
+    % [~,men_v_wom_nov_pvals(i,:),~,men_v_wom_nov_stats(i,:)] = ttest2(men_nov_data, wom_nov_data); % calculate t statistics
+    % [ne_m_h, ne_m_crit_p, ne_m_adj_ci_cvrg, ne_m_adj_p]=fdr_bh(men_v_men_pvals(i,:),0.05);
+    % [ne_w_h, ne_w_crit_p, ne_w_adj_ci_cvrg, ne_w_adj_p]=fdr_bh(wom_v_wom_pvals(i,:),0.05);
+    % [n_m_w_h, n_m_w_crit_p, n_m_w_adj_ci_cvrg, n_m_w_adj_p]=fdr_bh(men_v_wom_nov_pvals(i,:),0.05);
+    % [e_m_w_h, e_m_w_crit_p, e_m_w_adj_ci_cvrg, e_m_w_adj_p]=fdr_bh(men_v_wom_exp_pvals(i,:),0.05);
     
-    disp(sum(ne_m_h))
-    disp(sum(ne_w_h))
-    disp(sum(n_m_w_h))
-    disp(sum(e_m_w_h))
+    % disp(sum(ne_m_h))
+    % disp(sum(ne_w_h))
+    % disp(sum(n_m_w_h))
+    % disp(sum(e_m_w_h))
 
 
-    % [ni_h, ni_crit_p, ni_adj_ci_cvrg, ni_adj_p]=fdr_bh(nov_int_pvals(i,:),0.05);
-    % [ne_h, ne_crit_p, ne_adj_ci_cvrg, ne_adj_p]=fdr_bh(nov_exp_pvals(i,:),0.05);
+    [ni_h, ni_crit_p, ni_adj_ci_cvrg, ni_adj_p]=fdr_bh(nov_int_pvals(i,:),0.05);
+    [ne_h, ne_crit_p, ne_adj_ci_cvrg, ne_adj_p]=fdr_bh(nov_exp_pvals(i,:),0.05);
     % ni_sorted = sort(nov_int_pvals(i,:));
     % ne_sorted = sort(nov_exp_pvals(i,:));
     % ni_locations = find(nov_int_pvals(i,:) == ni_sorted(1:5));
     % ne_locations = find(nov_exp_pvals(i,:) == ne_sorted(1:5));
     % ni = length(ni_locations);
     % ne = length(ne_locations);
+    disp(sum(ni_h))
+    disp(sum(ne_h))
     % disp(ni_sorted(1))
     % disp(ni_locations(1:ni))
     % disp(ne_sorted(1))
     % disp(ne_locations(1:ne))
 
     % fprintf("min nov/int q: %d | min nov/exp q: %d")
-    % break
+    break
 end
 
 yrs_experience = [2,4,2,2,3,4,4,5,3,1,2,4,3,2,2,5,10,8,6,3,4,2,5,4,10,4,4,4,10,7,12,8,12,4,4,3,4,3,4 ...
@@ -172,7 +194,7 @@ X = [yrs_experience; age]';
 
 % x = yrs_experience; %Population of states
 % y = Correlationz(:,98,1)';
-y = Correlationz(:,135,1)';
+y = Correlationz(:,9,1)';
 % y = Correlationz(:,142,1)';
 % y = Correlationz(:,5,1)'; 
 % y = Correlationz(:,379,1)';
@@ -185,7 +207,7 @@ y = Correlationz(:,135,1)';
 
 mdl = fitlm(X,y);
 mdl
-scatter(x,y)
+scatter(yrs_experience,y)
 
 % mdl = fitlm
 format long

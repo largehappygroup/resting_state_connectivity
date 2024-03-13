@@ -53,11 +53,11 @@ copy_review(){
            foldername="${folder:51}"
            if echo "$foldername" | grep -E -q 'wrw*'; then
                  newpid="002_${foldername:10:3}"
-                 newdir="/home/zachkaras/fmri/three_studies_raw/$newpid/"
+                 newdir="/home/zachkaras/fmri/two_studies_raw/$newpid/"
                  echo "$newpid"
                  mkdir "$newdir"
-                 anat="$review_dir/$foldername/anatomy/t1spgr_208sl/ht1spgr_208sl.nii"
-                 func="$review_dir/$foldername/func/rest/run_01/utprun_01.nii"
+                 anat="$review_dir/$foldername/anatomy/t1spgr_208sl/t1spgr_208sl.nii"
+                 func="$review_dir/$foldername/func/rest/run_01/tprun_01.nii"
                  # code review was already corrected for physiological data
                  cp "$anat" "$newdir"
                  cp "$func" "$newdir"
@@ -87,9 +87,29 @@ copy_writing(){
       done
 }
 
-#copy_shapes
-#copy_review
-copy_writing
+copy_noncs(){
+      noncs_dir="/home/zachkaras/fmri/non-cs"
+      noncs_func_dir="$noncs_dir/Functional/"
+      noncs_anat_dir="$noncs_dir/Anatomy/"
+      for file in "$noncs_func_dir"*; do
+            #echo "$file"
+            new_id="101_${file:44:3}"
+            new_dir="/home/zachkaras/fmri/two_studies_raw/$new_id"
+            mkdir "$new_dir"
+            cp "$file" "$new_dir/tprun_01.nii"
+      done
 
+      for file in "$noncs_anat_dir"*; do
+            new_id="101_${file:41:3}"
+            new_dir="/home/zachkaras/fmri/two_studies_raw/$new_id"
+            cp "$file" "$new_dir/t1spgr_156sl.nii"
+      done
+}
+
+
+#copy_shapes
+copy_review
+#copy_writing
+copy_noncs
 
 
