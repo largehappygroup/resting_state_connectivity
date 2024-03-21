@@ -1,8 +1,9 @@
 % create average time courses for each parcel in Schaefer atlas
 
 % loading participant data
-datapath = '/home/zachkaras/fmri/preprocessed/';
+datapath = '/home/zachkaras/fmri/preprocessed2/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
+% remove mindy participants 113,181,210, 236,249
 
 % mask files / important variables
 maskfile = '/home/zachkaras/fmri/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz'; % change the path as needed
@@ -11,24 +12,30 @@ brain_idx = find(mask>0); % identifies only the voxels of the brain
 
 atlas = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
 atlas_2d_brain = atlas(brain_idx); % reshapes to 2d within the brain
-
+atlas_2d = atlas(:);
 % iterate through Schaefer atlas to get indices for each parcel
 for i=1:400
     parcels{i} = find(atlas_2d_brain == i);
 end
 
 % seed_vals = [58,133,192,339,377,395]; % Updated 3/3/20204
-% seed_vals = [133,172,192,284,339,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
-seed_vals = [9,67,176,183,231,242,341,343,348,380,386,389,391]; % Data driven, updated 3/11/2024
-% seed_vals = [9,67,133,172,176,183,192,231,242,284,339,341,343,348,380,386,389,391,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
+seed_vals = [133,172,192,284,339,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
+% seed_vals = [9,67,176,183,231,242,341,343,348,380,386,389,391]; % Data driven, updated 3/11/2024
+seed_vals = [9,67,133,172,176,183,192,231,242,284,339,341,343,348,380,386,389,391,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
 
-% for i=1:numel(seed_vals)
-%     seed_masks_2d{i} = find(atlas_2dbrain == seed_vals(i));
-% end
+for i=1:numel(seed_vals)
+    seed_masks_2d{i} = find(atlas_2d_brain == seed_vals(i));
+end
 
+rev_parcels = [];
+non_parcels = [];
 
 for f=1:numel(fnames)
     tic
+    if regexp(fnames{f}, '102_')
+        continue
+    end
+    timecourses = [];
     % Load and shape the data:
     disp(['subject ',num2str(f),' of ',num2str(numel(fnames)),':', fnames{f}]);
     restdata = niftiread(fnames{f}); % load the data
@@ -40,16 +47,75 @@ for f=1:numel(fnames)
     for i=1:numel(parcels) % creates a seed ROIs x timepoints matrix of the average time series in each seed ROI
         timecourses(i,:) = nanmean(restdata_2dbrain(parcels{i},:));
     end
-
-    for s=1:numel(seed_vals)
-        seed_timecourse = timecourses(seed_vals(s),:);
-        [Correlations_data_driven(f,:,s), p_vals_data_driven(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');
-        
+    
+    if regexp(fnames{f}, '002_')
+        rev_parcels = cat(3, rev_parcels, timecourses);
+    elseif regexp(fnames{f}, '101_')
+        non_parcels = cat(3, non_parcels, timecourses);
     end
+
+    % for s=1:numel(seed_vals)
+    %     seed_timecourse = timecourses(seed_vals(s),:);
+    %     [Correlations_noncs(f,:,s), p_vals_noncs(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');      
+    % end
     toc
 end
 
+
+rev_parcels(isnan(rev_parcels)) = 0;
+non_parcels(isnan(non_parcels)) = 0;
+
+mean_rev_mat = mean(rev_parcels, 3);
+mean_non_mat = mean(non_parcels, 3);
+
+corr_rev = corr(mean_rev_mat');
+corr_non = corr(mean_non_mat');
+
+corr_rev_z = atanh(corr_rev);
+corr_non_z = atanh(corr_non);
+
+Correlations_noncs(isnan(Correlations_noncs))=0;
+
+rev_connectivity = Correlations_noncs(1:37,:,:);
+non_connectivity = Correlations_noncs(38:end,:,:);
+
+rev_connectivity = atanh(rev_connectivity); % Z - scoring each study separately
+non_connectivity = atanh(non_connectivity);
+
 Correlationz_data_driven = atanh(Correlations_data_driven);
+Correlationz_noncs = atanh(Correlations_noncs);
+
+for i=1:numel(seed_vals)
+    temp = Correlationz_data_driven(:,:,i);
+    temp(:,seed_vals(i)) = [];
+    Correlationz_data_driven2(:,:,i) = temp;
+end
+
+for i=1:numel(seed_vals)
+    temp = Correlationz_noncs(:,:,i);
+    temp(:,seed_vals(i)) = [];
+    Correlationz_noncs2(:,:,i) = temp;
+end
+
+for i=1:numel(seed_vals)
+    temp = Correlations(:,:,i);
+    temp(:,seed_vals(i)) = [];
+    Correlations2(:,:,i) = temp;
+end
+
+for i=1:numel(seed_vals)
+    temp = rev_connectivity(:,:,i);
+    temp(:,seed_vals(i)) = [];
+    rev_connectivity2(:,:,i) = temp;
+end
+
+for i=1:numel(seed_vals)
+    temp = non_connectivity(:,:,i);
+    temp(:,seed_vals(i)) = [];
+    non_connectivity2(:,:,i) = temp;
+end
+
+
 
 novices = {'001_161','003_150','003_151','003_203','003_125','001_151','001_153','001_154','001_158','001_162','001_166',...
     '001_167','001_170','001_175','003_119','003_121','003_130','003_131','003_133','003_134','003_140','003_142','003_144','003_112','003_141'};
@@ -65,24 +131,16 @@ exp_idx = find_group_members(experts, all_ids);
 nov_connectivity = Correlationz_data_driven(nov_idx,:,:);
 int_connectivity = Correlationz_data_driven(int_idx,:,:);
 exp_connectivity = Correlationz_data_driven(exp_idx,:,:);
+% rev_connectivity = Correlationz_noncs2(1:37,:,:);
+% non_connectivity = Correlationz_noncs2(38:end,:,:);
 
 
 
 for i=1:numel(seed_vals)
-    temp = Correlationz_data_driven(:,:,i);
-    temp(:,seed_vals(i)) = [];
-    Correlationz_data_driven2(:,:,i) = temp;
-end
-
-for i=1:numel(seed_vals)
-    temp = Correlations(:,:,i);
-    temp(:,seed_vals(i)) = [];
-    Correlations2(:,:,i) = temp;
-end
-
-for i=1:numel(seed_vals)
-    outfilename = sprintf("/home/zachkaras/fmri/midprocessing/correlationz_seed%d.csv", seed_vals(i));
-    writematrix(Correlationz2(:,:,i), outfilename);
+    outfilename = sprintf("/home/zachkaras/fmri/midprocessing/rev_correlationz_seed%d.csv", seed_vals(i));
+    writematrix(rev_connectivity2(:,:,i), outfilename);
+    outfilename = sprintf("/home/zachkaras/fmri/midprocessing/non_correlationz_seed%d.csv", seed_vals(i));
+    writematrix(non_connectivity2(:,:,i), outfilename);
 end
 
 
@@ -139,19 +197,26 @@ end
 % n_men = size(men_connectivity,3);
 % n_wom = size(wom_connectivity,3);
 
+qvals = [];
+% ne_qvals = [];
+% ni_qvals = [];
 for i=1:numel(seed_vals)
     fprintf("\nSeed %d\n", seed_vals(i))
-    nov_data = squeeze(nov_connectivity(:,:,i));
-    int_data = squeeze(int_connectivity(:,:,i));
-    exp_data = squeeze(exp_connectivity(:,:,i));
+    % nov_data = squeeze(nov_connectivity(:,:,i));
+    % int_data = squeeze(int_connectivity(:,:,i));
+    % exp_data = squeeze(exp_connectivity(:,:,i));
+    rev_data = squeeze(rev_connectivity(:,:,i));
+    non_data = squeeze(non_connectivity(:,:,i));
 
     % men_nov_data = squeeze(men_nov_connectivity(:,:,i));
     % wom_nov_data = squeeze(wom_nov_connectivity(:,:,i));
     % men_exp_data = squeeze(men_exp_connectivity(:,:,i));
     % wom_exp_data = squeeze(wom_exp_connectivity(:,:,i));
     
-    [~,nov_exp_pvals(i,:),~,nov_exp_stats(i,:)] = ttest2(nov_data, exp_data); % calculate t statistics
-    [~,nov_int_pvals(i,:),~,nov_int_stats(i,:)] = ttest2(nov_data, int_data); % calculate t statistics
+    % [~,nov_exp_pvals(i,:),~,nov_exp_stats(i,:)] = ttest2(exp_data, nov_data); % calculate t statistics
+    % [~,nov_int_pvals(i,:),~,nov_int_stats(i,:)] = ttest2(nov_data, int_data); % calculate t statistics
+    [~,rev_non_pvals(i,:),~,rev_non_stats(i,:)] = ttest2(rev_data, non_data); % calculate t statistics
+
     % [~,men_v_men_pvals(i,:),~,men_v_men_stats(i,:)] = ttest2(men_nov_data, men_exp_data); % calculate t statistics
     % [~,wom_v_wom_pvals(i,:),~,wom_v_wom_stats(i,:)] = ttest2(wom_nov_data, wom_exp_data); % calculate t statistics
     % [~,men_v_wom_exp_pvals(i,:),~,men_v_wom_exp_stats(i,:)] = ttest2(men_exp_data, wom_exp_data); % calculate t statistics
@@ -167,23 +232,67 @@ for i=1:numel(seed_vals)
     % disp(sum(e_m_w_h))
 
 
-    [ni_h, ni_crit_p, ni_adj_ci_cvrg, ni_adj_p]=fdr_bh(nov_int_pvals(i,:),0.05);
-    [ne_h, ne_crit_p, ne_adj_ci_cvrg, ne_adj_p]=fdr_bh(nov_exp_pvals(i,:),0.05);
+    % [ni_h, ni_crit_p, ni_adj_ci_cvrg, ni_adj_p]=fdr_bh(nov_int_pvals(i,:),0.05);
+    % [ne_h, ne_crit_p, ne_adj_ci_cvrg, ne_adj_p]=fdr_bh(nov_exp_pvals(i,:),0.05);
+    [rn_h, rn_crit_p, rn_adj_ci_cvrg, rn_adj_p]=fdr_bh(rev_non_pvals(i,:), 0.01);
     % ni_sorted = sort(nov_int_pvals(i,:));
     % ne_sorted = sort(nov_exp_pvals(i,:));
     % ni_locations = find(nov_int_pvals(i,:) == ni_sorted(1:5));
     % ne_locations = find(nov_exp_pvals(i,:) == ne_sorted(1:5));
     % ni = length(ni_locations);
     % ne = length(ne_locations);
-    disp(sum(ni_h))
-    disp(sum(ne_h))
+    % disp(sum(ni_h))
+    % disp(sum(ne_h))
+    qvals = cat(1,qvals, rn_adj_p);
+    % ne_qvals = cat(1,ne_qvals, ne_adj_p);
+    % ni_qvals = cat(1,ni_qvals, ni_adj_p);
+
+    num_sig = sum(rn_h);
+    disp(num_sig)
+
+
+    % disp(max(rev_non_stats(i).tstat))
+    % disp(min(rev_non_stats(i).tstat))
+    % find(rn_h == 1)
+    if isnan(num_sig) || num_sig <= 0
+        continue
+    else
+        make_parcel_brains(seed_vals(i), rn_h, rev_non_stats(i).tstat, empty_brain, brain_idx, parcels, nii_template);
+    end
+    % disp(sum(ne_h))
     % disp(ni_sorted(1))
     % disp(ni_locations(1:ni))
     % disp(ne_sorted(1))
     % disp(ne_locations(1:ne))
+    % make_parcel_brains(seed_vals(i), rn_h, rev_non_stats(i).tstat, empty_brain, brain_idx, parcels, nii_template);
+    % create an empty brain
+    % new_brain = empty_brain;
+
+    % significant parcel indexes should equal the t-stat
+    % zero out parcels except for significant ones
+    % new_parcel_idx = cell(1,400);
+    % new_parcel_idx(rn_h) = parcels(rn_h);
+
+    % new_brain(brain_idx) 
+    % new_parcels = zeros(1,400);
+
+    % where there's a significant correlation in rn_h, 
+    % new_parcels(rn_h) = rev_non_stats.tstat(i, rn_h);
+
+    
+    % disp(new_parcels)
+    % parcels with significant activation
+    % new_brain(parcels{})
+    % make the value the t-stat associated with the indexes where h is 1
+    
 
     % fprintf("min nov/int q: %d | min nov/exp q: %d")
-    break
+    % break
+end
+
+tstats = [];
+for i=1:numel(rev_non_stats)
+    tstats = cat(1,tstats,rev_non_stats(i).tstat);
 end
 
 yrs_experience = [2,4,2,2,3,4,4,5,3,1,2,4,3,2,2,5,10,8,6,3,4,2,5,4,10,4,4,4,10,7,12,8,12,4,4,3,4,3,4 ...

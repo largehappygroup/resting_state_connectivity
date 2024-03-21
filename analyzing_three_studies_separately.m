@@ -6,7 +6,9 @@ noncs_subj_seedvox = [];
 maskfile = '/home/zachkaras/fmri/analysis/atlases/MNI152_T1_2mm_brain_mask.nii.gz';
 nii_template = load_untouch_nii(maskfile);
 
-seed_vals = [9,67,133,172,176,183,192,231,242,284,339,341,343,348,380,386,389,391,395]; % Updated 3/11/2024 - realized right and left hemisphere are switched in atlas
+% seed_vals = [9,67,133,172,176,183,192,231,242,284,339,341,343,348,380,386,389,391,395]; % data driven 3/12/24
+seed_vals = [133,172,192,284,339,395]; % significant from data driven + hand-picked
+
 for i=1:numel(seed_vals)
     seed_masks_2d{i} = find(result_map_2d_brain == seed_vals(i));
 end
@@ -19,11 +21,14 @@ datapath = '/home/zachkaras/fmri/preprocessed2/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 
-for f=39:numel(fnames)
+for f=1:numel(fnames)
     tic
     if regexp(fnames{f}, '102_')
         continue
     end
+    FC_seed2vox = [];
+    FCp_seed2vox = [];
+    seed_ts = [];
     % Load and shape the data:
     disp(['subject ',num2str(f),' of ',num2str(numel(fnames)),' : ', fnames{f}]);
     disp("loading and shaping")
@@ -59,14 +64,16 @@ for f=39:numel(fnames)
 end
 % Z-transforming the data to make it normally distributed
 struct_subj_seedvox(isnan(struct_subj_seedvox))=0;
-% review_subj_seedvox(isnan(review_subj_seedvox))=0;
+review_subj_seedvox(isnan(review_subj_seedvox))=0;
 prose_subj_seedvox(isnan(prose_subj_seedvox))=0;
+noncs_subj_seedvox(isnan(noncs_subj_seedvox))=0;
 
 struct_sub_seedvox_z = atanh(struct_subj_seedvox);
-% review_sub_seedvox_z = atanh(review_subj_seedvox);
+review_sub_seedvox_z = atanh(review_subj_seedvox);
 prose_sub_seedvox_z = atanh(prose_subj_seedvox);
+noncs_sub_seedvox_z = atanh(noncs_subj_seedvox);
 
-seed_vals = [58,133,192,339,377,395];
+% seed_vals = [58,133,192,339,377,395];
 
 % plot_correlations(seed_masks_2d, seed_vals, struct_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "struct")
 % plot_correlations(seed_masks_2d, seed_vals, review_sub_seedvox_z, mni_brain, empty_brain, brain_idx, "review")
@@ -131,33 +138,43 @@ exp_connectivity = super_brain(:,:,exp_idx);
 n_nov = size(nov_connectivity,3);
 n_int = size(int_connectivity,3);
 n_exp = size(exp_connectivity,3);
+n_rev = size(review_sub_seedvox_z,3);
+n_non = size(noncs_sub_seedvox_z,3);
 % n_men = size(men_connectivity,3);
 % n_wom = size(wom_connectivity,3);
 
 %% Writing Nifti files of experts, intermediates, and novices corresponding to each seed
 for i=1:numel(seed_masks_2d)
-    nov_vols = reshape_4d_nifti(n_nov, nov_connectivity(i,:,:), brain_idx, empty_brain);
-    int_vols = reshape_4d_nifti(n_int, int_connectivity(i,:,:), brain_idx, empty_brain);
-    exp_vols = reshape_4d_nifti(n_exp, exp_connectivity(i,:,:), brain_idx, empty_brain);
+    % nov_vols = reshape_4d_nifti(n_nov, nov_connectivity(i,:,:), brain_idx, empty_brain);
+    % int_vols = reshape_4d_nifti(n_int, int_connectivity(i,:,:), brain_idx, empty_brain);
+    % exp_vols = reshape_4d_nifti(n_exp, exp_connectivity(i,:,:), brain_idx, empty_brain);
+    rev_vols = reshape_4d_nifti(n_rev, review_sub_seedvox_z(i,:,:), brain_idx, empty_brain);
+    non_vols = reshape_4d_nifti(n_non, noncs_sub_seedvox_z(i,:,:), brain_idx, empty_brain);
     % men_vols = reshape_4d_nifti(n_men, men_connectivity(i,:,:), brain_idx, empty_brain);
     % wom_vols = reshape_4d_nifti(n_wom, wom_connectivity(i,:,:), brain_idx, empty_brain);
 
     % write to nifti file for that seed
-    nov_int = cat(4, nov_vols, int_vols);
-    nov_exp = cat(4, nov_vols, exp_vols);
+    % nov_int = cat(4, nov_vols, int_vols);
+    % nov_exp = cat(4, nov_vols, exp_vols);
+    rev_non = cat(4,rev_vols, non_vols);
     % men_wom = cat(4, men_vols, wom_vols);
 
     
     % saving novice-intermediate, novice-expert nifti files, then
     % compressing them
-    filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_int_seed%d",seed_vals(i));
-    write_nii_cc(nii_template, nov_int, filename);
-    compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_int_seed%d.nii", seed_vals(i));
-    system(compress_file);
+    % filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_int_seed%d",seed_vals(i));
+    % write_nii_cc(nii_template, nov_int, filename);
+    % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_int_seed%d.nii", seed_vals(i));
+    % system(compress_file);
+    % 
+    % filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_exp_seed%d",seed_vals(i));
+    % write_nii_cc(nii_template, nov_exp, filename);
+    % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_exp_seed%d.nii", seed_vals(i));
+    % system(compress_file);
 
-    filename = sprintf("/home/zachkaras/fmri/midprocessing/nov_exp_seed%d",seed_vals(i));
-    write_nii_cc(nii_template, nov_exp, filename);
-    compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_exp_seed%d.nii", seed_vals(i));
+    filename = sprintf("/home/zachkaras/fmri/midprocessing/rev_non_seed%d",seed_vals(i));
+    write_nii_cc(nii_template, rev_non, filename);
+    compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/rev_non_seed%d.nii", seed_vals(i));
     system(compress_file);
 
     % filename = sprintf("/home/zachkaras/fmri/midprocessing/men_wom_seed%d",seed_vals(i));
