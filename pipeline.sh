@@ -53,27 +53,31 @@ preprocess(){
 }
 
 # for loop going through all participant folders 
-find ../two_studies_raw/ -maxdepth 1 -type d | while read -r folder; do
+find ../three_studies_raw/ -maxdepth 1 -type d | while read -r folder; do
       foldername="${folder:19}"
+      foldername="003_111"
       echo "$foldername"
       if [[ "$foldername" =~  ^[0-9]{3}_[0-9]{3}$ ]]; then
-            mkdir "../two_studies_raw/out_$foldername" 
+            mkdir "../three_studies_raw/out_$foldername" 
             echo "Processing folder $foldername"
+            echo "$foldername"
             if [[ "$foldername" =~ ^101_[0-9]{3}$ ]]; then
-                  ANATFILE="../two_studies_raw/$foldername/t1spgr_156sl.nii"
-                  FUNCFILE="../two_studies_raw/$foldername/tprun_01.nii"
+                  ANATFILE="../three_studies_raw/$foldername/t1spgr_156sl.nii"
+                  FUNCFILE="../three_studies_raw/$foldername/tprun_01.nii"
 
             elif [[ "$foldername" =~ ^102_[0-9]{3}$ ]]; then
-                  ANATFILE="../two_studies_raw/$foldername/t1spgr_208sl.nii"
-                  FUNCFILE="../two_studies_raw/$foldername/tprun_01.nii.gz"
+                  ANATFILE="../three_studies_raw/$foldername/t1spgr_208sl.nii"
+                  FUNCFILE="../three_studies_raw/$foldername/tprun_01.nii.gz"
             else
-                  ANATFILE="../two_studies_raw/$foldername/t1spgr_208sl.nii"
-                  FUNCFILE="../two_studies_raw/$foldername/tprun_01.nii"
+                  ANATFILE="../three_studies_raw/$foldername/ht1spgr_208sl.nii"
+                  FUNCFILE="../three_studies_raw/$foldername/utrun_01.nii"
             fi
             
-            OUT="../two_studies_raw/out_$foldername"
+            OUT="../three_studies_raw/out_$foldername"
             #echo "$FUNCFILE" "$ANATFILE"
+            
             preprocess $ANATFILE $FUNCFILE $OUT
+            break
       fi
 done
 

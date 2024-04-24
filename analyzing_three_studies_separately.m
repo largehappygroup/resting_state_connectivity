@@ -17,7 +17,7 @@ FC_seed2vox = [];
 FCp_seed2vox = [];
 seed_ts = [];
 
-datapath = '/home/zachkaras/fmri/preprocessed2/';
+datapath = '/home/zachkaras/fmri/preprocessed3/';
 files = dir(datapath); for i=3:numel(files); fnames{i-2}=files(i).name; end % find the file names to analyze in the current directory
 
 
@@ -172,10 +172,10 @@ for i=1:numel(seed_masks_2d)
     % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/nov_exp_seed%d.nii", seed_vals(i));
     % system(compress_file);
 
-    filename = sprintf("/home/zachkaras/fmri/midprocessing/rev_non_seed%d",seed_vals(i));
-    write_nii_cc(nii_template, rev_non, filename);
-    compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/rev_non_seed%d.nii", seed_vals(i));
-    system(compress_file);
+    % filename = sprintf("/home/zachkaras/fmri/midprocessing/rev_non_seed%d",seed_vals(i));
+    % write_nii_cc(nii_template, rev_non, filename);
+    % compress_file = sprintf("gzip /home/zachkaras/fmri/midprocessing/rev_non_seed%d.nii", seed_vals(i));
+    % system(compress_file);
 
     % filename = sprintf("/home/zachkaras/fmri/midprocessing/men_wom_seed%d",seed_vals(i));
     % write_nii_cc(nii_template, men_wom, filename);

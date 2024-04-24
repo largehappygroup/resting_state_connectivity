@@ -54,10 +54,10 @@ for f=1:numel(fnames)
         non_parcels = cat(3, non_parcels, timecourses);
     end
 
-    % for s=1:numel(seed_vals)
-    %     seed_timecourse = timecourses(seed_vals(s),:);
-    %     [Correlations_noncs(f,:,s), p_vals_noncs(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');      
-    % end
+    for s=1:numel(seed_vals)
+        seed_timecourse = timecourses(seed_vals(s),:);
+        [Correlations_noncs(f,:,s), p_vals_noncs(f,:,s)] = corr(seed_timecourse', timecourses', 'rows', 'pairwise', 'type','pearson');      
+    end
     toc
 end
 
@@ -294,6 +294,9 @@ tstats = [];
 for i=1:numel(rev_non_stats)
     tstats = cat(1,tstats,rev_non_stats(i).tstat);
 end
+
+writematrix(tstats, "./midprocessing/0423_rev_non_tstats.csv")
+writematrix(qvals, "./midprocessing/0423_rev_non_qvals.csv")
 
 yrs_experience = [2,4,2,2,3,4,4,5,3,1,2,4,3,2,2,5,10,8,6,3,4,2,5,4,10,4,4,4,10,7,12,8,12,4,4,3,4,3,4 ...
     2.5,3,2,2,3,1.5,3,2,2,2,2,3,2,2.5,2,2,1,1,5,1];

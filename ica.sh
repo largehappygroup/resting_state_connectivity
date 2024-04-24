@@ -39,10 +39,10 @@ find "/home/zachkaras/fmri/three_studies_raw/" -maxdepth 1 -type d | while read 
       if [[ "$foldername" =~ "out" ]]; then
             echo "$foldername"
             datadir="/home/zachkaras/fmri/three_studies_raw/$foldername"
-            #perform_ica "$datadir"
+            perform_ica "$datadir"
             #format_for_fix "$datadir"
             #perform_fix "$datadir"
-            remove_components "$datadir"
+            #remove_components "$datadir"
       fi
 done
 

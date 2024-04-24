@@ -21,14 +21,14 @@ function make_parcel_brains(seed, sig_idx, stats, empty_brain, brain_idx, parcel
     end
 
     if sum(new_brain_neg(:)) ~= 0
-        filename = sprintf("/home/zachkaras/fmri/results/parcel_map_seed%d_neg_p05",seed);
+        filename = sprintf("/home/zachkaras/fmri/results/0423_parcel_map_seed%d_neg_p01",seed);
         write_nii_cc(nii_template, new_brain_neg, filename);
-        compress_file = sprintf("gzip /home/zachkaras/fmri/results/parcel_map_seed%d_neg_p05.nii", seed);
+        compress_file = sprintf("gzip /home/zachkaras/fmri/results/0423_parcel_map_seed%d_neg_p01.nii", seed);
         system(compress_file);
     if sum(new_brain_pos(:)) ~= 0
-        filename = sprintf("/home/zachkaras/fmri/results/parcel_map_seed%d_pos_p05",seed);
+        filename = sprintf("/home/zachkaras/fmri/results/0423_parcel_map_seed%d_pos_p01",seed);
         write_nii_cc(nii_template, new_brain_pos, filename);
-        compress_file = sprintf("gzip /home/zachkaras/fmri/results/parcel_map_seed%d_pos_p05.nii", seed);
+        compress_file = sprintf("gzip /home/zachkaras/fmri/results/0423_parcel_map_seed%d_pos_p01.nii", seed);
         system(compress_file);
     end
     
