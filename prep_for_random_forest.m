@@ -74,6 +74,10 @@ corr_non = corr(mean_non_mat');
 corr_rev_z = atanh(corr_rev);
 corr_non_z = atanh(corr_non);
 
+writematrix(corr_rev_z, "./midprocessing/0423_corr_rev_z.csv")
+writematrix(corr_non_z, "./midprocessing/0423_corr_non_z.csv")
+
+
 Correlations_noncs(isnan(Correlations_noncs))=0;
 
 rev_connectivity = Correlations_noncs(1:37,:,:);

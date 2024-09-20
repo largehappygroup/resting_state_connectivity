@@ -76,8 +76,12 @@ end
 all_cortex_network_labels{end+1}='Subcortex';
 
 % Here's an example of a result/seed that you might use:
-result_map = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
-result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
+% result_map = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz'); % let's pretend this is a result or seed region file
+% result_map_2d_brain = result_map(brain_idx); % reshapes to 2d within the brain
+
+atlas = niftiread('/home/zachkaras/fmri/analysis/atlases/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_2mm.nii.gz');
+atlas_2d_brain = atlas(brain_idx); % reshapes to 2d within the brain
+atlas_2d = atlas(:);
 
 % now let's pretend that we want to use three seed regions, which have the values of 1, 2, and 3 in the brain:
 % seed_vals = [1,2,3];
