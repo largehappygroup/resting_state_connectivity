@@ -1,6 +1,6 @@
 Functional COnnectivity Preprocessing and Analysis:
 
-These matlab and shell scripts can be run in order. The dependencies are below, but please email me if anything seems to be missing (elide for double blind):
+These matlab and shell scripts can be run in order. The dependencies are below, but please email me if anything seems to be missing (z.karas@vanderbilt.edu):
 ANTs installation - https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS
 FSL installation - https://fsl.fmrib.ox.ac.uk/fsl/docs/#/install/index 
 parallel - GNU parallel 20231022
