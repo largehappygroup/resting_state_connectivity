@@ -1,5 +1,6 @@
 # resting_state_connectivity
-Analyzing resting state fMRI data to study coding behavior. This code is generally disorganized, but the 'better_replication_package' folder contains the analysis scripts and some sample data to analyze. 
+This code is pretty disorganized, so instead direct your attention to the 'better_replication_package' folder.
+The purpose of this code is to analyze resting state fMRI data to study coding behavior.
 
 
 File naming:
