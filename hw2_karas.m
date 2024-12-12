@@ -3,6 +3,9 @@ raw = "/home/zachkaras/fmri/three_studies_raw/001_151/utrun_01.nii";
 unsmooth_path = "/home/zachkaras/fmri/three_studies_raw/out_001_151/raw_mc_epi2mni.nii.gz";
 st_corrected = "st_corrected.nii";
 
+raw = "/home/zachkaras/dcai_project/clean/sub-01/clean_sub-01_task-action_run-1_desc-preproc_bold.nii.gz";
+
+
 raw_brain = niftiread(raw);
 st_brain = niftiread(st_corrected);
 unsmooth = niftiread(unsmooth_path);
