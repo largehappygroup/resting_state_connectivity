@@ -1,4 +1,4 @@
-Functional COnnectivity Preprocessing and Analysis:
+Functional Connectivity Preprocessing and Analysis:
 
 These matlab and shell scripts can be run in order. The dependencies are below, but please email me if anything seems to be missing (z.karas@vanderbilt.edu): 
 1. [ANTs installation](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS) 
