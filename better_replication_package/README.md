@@ -1,4 +1,5 @@
 Functional Connectivity Preprocessing and Analysis:
+This code is designed to preprocess and analyze resting-state fMRI data. The preprocessing is pretty standard and uses the ANTs and FSL libraries. The analysis primarily consists of functional connectivity analysis at the granularity of regions from the Schaefer Atlas. The dataset used in this project originates from four different datasets, all of which were collected on the University of Michigan fMRI scanner. Three of the datasets consist of programmers (please email me: z.karas@vanderbilt.edu or my advisor yu.huang@vanderbilt.edu) for access. The fourth dataset was collected by the Computational & Cognitive Neuroscience Lab at UM for a study related to aging (please email Violet Zhou violetz@umich.edu or Noah Reardon nreardon@umich.edu) for access to that data. 
 
 These matlab and shell scripts can be run in order. The dependencies are below, but please email me if anything seems to be missing (z.karas@vanderbilt.edu): 
 1. [ANTs installation](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS) 
